@@ -1,0 +1,19 @@
+# Scaleway dynamic inventory (cattle). Auto-discovers instances by tag so new
+# VPCs join the fleet without editing any host list.
+#
+# Prereqs (when VPCs exist):
+#   ansible-galaxy collection install community.general
+#   export SCW_ACCESS_KEY / SCW_SECRET_KEY  (from Bao kv/projects/scaleway/cli)
+#   ansible-inventory -i inventory/scaleway.yml --graph
+#
+# Tag instances `fleet` at creation (Terraform/cloud-init) and they appear here.
+plugin: community.general.scaleway
+regions:
+  - fr-par
+  - nl-ams
+tags:
+  - fleet
+variables:
+  ansible_user: fhestvang
+# Use the tailnet name for SSH once the instance has joined the tailnet via its
+# cloud-init ephemeral auth key (see docs/architecture.md).

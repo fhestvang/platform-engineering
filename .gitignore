@@ -1,0 +1,4 @@
+# Never commit rendered secrets or local state.
+*.env
+.config/linear-tui/env
+**/.DS_Store

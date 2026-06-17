@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# chezmoi convergence: ensure the dotfiles repo is present, then run its
+# hardened installer (user-local tools, stow, plugins, ssh fragment, health).
+# This reuses the proven install.sh rather than re-porting its logic; chezmoi
+# owns orchestration + per-machine data + secrets, install.sh owns the content.
+#
+# run_onchange: re-runs whenever this script's rendered content changes. Bump
+# the marker below to force a re-converge across the fleet.
+#   marker: v1 ({{ .role }})
+set -euo pipefail
+
+repo="$HOME/github/dotfiles"
+if [ ! -d "$repo/.git" ]; then
+  mkdir -p "$HOME/github"
+  git clone https://github.com/fhestvang/dotfiles.git "$repo"
+fi
+git -C "$repo" pull --ff-only || true
+"$repo/install.sh" --install-packages --auto-zsh

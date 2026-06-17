@@ -1,0 +1,16 @@
+---
+# Converge the fleet: Ansible handles host reachability/ordering and (later)
+# system-level tasks, then hands the user environment to chezmoi.
+#
+# Usage:
+#   cd ansible && ansible-playbook site.yml            # static fleet
+#   ansible-playbook -i inventory/scaleway.yml site.yml  # VPCs (when they exist)
+- name: Converge user environment across the fleet
+  hosts: fleet
+  gather_facts: true
+  roles:
+    - chezmoi
+
+# Future: a `system` role for sudo-requiring tasks (packages, systemd units,
+# users). Left out for now — the tinys need a sudo password and the user-local
+# install.sh path covers tooling without root.

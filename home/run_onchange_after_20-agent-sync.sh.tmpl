@@ -1,0 +1,16 @@
+{{ if .isAgentHost -}}
+#!/usr/bin/env bash
+# Agent-definition plane (agent-sync): only on agent hosts (spark/laptop).
+# The tinys are not agent hosts, so this renders to a no-op there.
+#   marker: v1
+set -euo pipefail
+toolkit="$HOME/github/fhh-toolkit"
+[ -d "$toolkit" ] || { echo "agent-sync: fhh-toolkit not present, skipping"; exit 0; }
+for s in runtimes/codex/sync-config.sh runtimes/claude/sync-config.sh; do
+  [ -x "$toolkit/$s" ] && "$toolkit/$s" || true
+done
+{{- else -}}
+#!/usr/bin/env bash
+# {{ .hostname }} is not an agent host; nothing to sync.
+exit 0
+{{- end }}

@@ -1,0 +1,31 @@
+---
+# Install chezmoi (user-local) and converge the user environment from the
+# fleet-provisioning repo. This is the bridge: Ansible owns system/fleet, then
+# hands the user-env plane to chezmoi.
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/bin"
+    state: directory
+    mode: "0755"
+
+- name: Install chezmoi (user-local, idempotent)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    command -v chezmoi >/dev/null 2>&1 && exit 0
+    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "{{ ansible_env.HOME }}/.local/bin"
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Converge user environment with chezmoi
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export PATH="{{ ansible_env.HOME }}/.local/bin:$PATH"
+    if [ -d "{{ ansible_env.HOME }}/.local/share/chezmoi/.git" ]; then
+      chezmoi git -- pull --ff-only || true
+      chezmoi apply
+    else
+      chezmoi init --apply https://github.com/fhestvang/fleet-provisioning.git
+    fi
+  args:
+    executable: /bin/bash
