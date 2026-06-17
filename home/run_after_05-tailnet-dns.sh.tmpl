@@ -1,0 +1,12 @@
+{{ if or (eq .role "tiny") (eq .role "pi") -}}
+#!/usr/bin/env bash
+# The tinys lose Tailscale accept-dns on reboot, which stops bao.<tailnet> from
+# resolving and breaks every Bao-dependent step (atuin login, scw/linear
+# wrappers). Re-assert it on each converge so DNS self-heals. {{ .hostname }}
+command -v tailscale >/dev/null 2>&1 || exit 0
+tailscale set --accept-dns=true 2>/dev/null || true
+{{- else -}}
+#!/usr/bin/env bash
+# {{ .hostname }}: not a tiny; Tailscale DNS managed elsewhere.
+exit 0
+{{- end }}
