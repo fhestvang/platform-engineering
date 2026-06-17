@@ -1,0 +1,22 @@
+#cloud-config
+# Provision a disposable Scaleway VM to fleet parity from the *current*
+# definitions: join the tailnet as tag:scw-vm, then run the dotfiles installer.
+hostname: ${hostname}
+users:
+  - name: fhestvang
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    ssh_authorized_keys:
+      - ${ssh_pubkey}
+package_update: true
+packages:
+  - curl
+  - git
+runcmd:
+  # 1. Join the tailnet (ephemeral, pre-authorized, tagged scw-vm). --ssh also
+  #    enables Tailscale SSH governed by the ACL.
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - tailscale up --authkey='${tailscale_authkey}' --hostname='${hostname}' --advertise-tags=tag:scw-vm --ssh
+  # 2. Converge the user environment from the current fleet definition.
+  - su - fhestvang -c 'mkdir -p ~/github && git clone --depth 1 ${dotfiles_repo} ~/github/dotfiles && ~/github/dotfiles/install.sh --install-packages --auto-zsh'

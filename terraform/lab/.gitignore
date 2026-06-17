@@ -1,0 +1,8 @@
+# Local state + provider + any creds — never commit.
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.auto.tfvars
+crash.log
