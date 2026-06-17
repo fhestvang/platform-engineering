@@ -1,6 +1,0 @@
-{{- /* Only manage the Linear secret env where OpenBao is reachable (renders the
-       key). On the fleet (Bao unreachable) leave the materialized file alone —
-       dotfiles-fleet-linear-key owns it there until Bao-on-fleet is solved. */ -}}
-{{ if not .baoReachable }}
-.config/linear-tui/env
-{{ end }}
