@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Join the box to fleet-wide atuin history sync. Idempotent: if `atuin sync`
+# already works (logged in), do nothing; otherwise pull the account + E2E key
+# from OpenBao and log in. No secrets live in this script.
+#   {{ .hostname }}
+set -uo pipefail
+
+command -v atuin >/dev/null 2>&1 || exit 0
+# Already logged in? (sync succeeds when it has a session.)
+atuin sync >/dev/null 2>&1 && exit 0
+
+: "${BAO_ADDR:=https://bao.olm-hops.ts.net}"
+export BAO_ADDR
+command -v bao >/dev/null 2>&1 || exit 0
+u=$(bao kv get -field=username kv/projects/atuin 2>/dev/null) || exit 0
+p=$(bao kv get -field=password kv/projects/atuin 2>/dev/null) || exit 0
+k=$(bao kv get -field=key      kv/projects/atuin 2>/dev/null) || exit 0
+[ -n "$u" ] && [ -n "$p" ] && [ -n "$k" ] || exit 0
+
+if atuin login -u "$u" -p "$p" -k "$k" >/dev/null 2>&1; then
+  atuin sync >/dev/null 2>&1 || true
+  echo "atuin: logged in as $u + synced"
+else
+  echo "atuin: login failed (Bao reachable? creds set?)" >&2
+fi
