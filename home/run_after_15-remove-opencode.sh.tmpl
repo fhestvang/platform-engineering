@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# OpenCode is retired from the fleet. Keep this cleanup idempotent so every
+# hourly chezmoi update removes old installs regardless of how they got there.
+set -euo pipefail
+
+remove_path() {
+  local path="$1"
+  if [ -e "$path" ] || [ -L "$path" ]; then
+    rm -rf "$path"
+    echo "removed: $path"
+  fi
+}
+
+remove_path "$HOME/.local/bin/opencode"
+remove_path "$HOME/.local/lib/node_modules/opencode-ai"
+remove_path "$HOME/.local/share/mise/installs/opencode"
+remove_path "$HOME/.local/share/mise/installs/npm-opencode-ai"
+remove_path "$HOME/.config/opencode"
+
+if command -v npm >/dev/null 2>&1; then
+  npm uninstall -g opencode-ai >/dev/null 2>&1 || true
+fi
