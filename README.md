@@ -4,9 +4,9 @@ Convergent workstation provisioning: bring any machine up to "how I work on
 Spark" with one command, across planes — CLI/TUI tools, shell, agent
 definitions, and secrets.
 
-This replaces the homegrown trio (`dotfiles/install.sh` push fan-out +
-`agent-sync` + the secret materialize helper) with two composable, off-the-shelf
-tools.
+This replaced the homegrown trio (`dotfiles/install.sh` push fan-out +
+`agent-sync` + the secret materialize helper) with chezmoi as a single
+pull-model convergence engine.
 
 ## Division of labor
 
@@ -16,10 +16,9 @@ tools.
 | Secrets | **chezmoi + OpenBao** | rendered at apply from `kv/projects/*`; never in the repo |
 | System: Spark serving stack (user systemd units) | **chezmoi** | `dot_config/systemd/user/*.service`, spark-only via `.chezmoiignore`; a `run_after` hook does `daemon-reload` + enable. No root/apt — user-local by design. |
 
-chezmoi is the convergence engine; for now it **drives the hardened
-`dotfiles/install.sh`** (tools/stow/plugins) via a `run_onchange` script rather
-than re-porting its content — so nothing that already works breaks. Content can
-migrate into chezmoi incrementally later.
+chezmoi is the convergence engine. Dotfiles, nvim, and tool configs now live
+**in** chezmoi (migrated stow→chezmoi 2026-06-18); it still drives the hardened
+`dotfiles/install.sh` for tool *installs* via a `run_after` script.
 
 ## Bootstrap a machine
 
@@ -29,9 +28,9 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
 ```
 
 That clones this repo (source is `home/`, see `.chezmoiroot`), computes
-per-machine facts (`role`, `isAgentHost`, `baoReachable`), clones+runs the
-dotfiles installer, runs agent-sync on agent hosts, and renders secrets where
-OpenBao is reachable.
+per-machine facts (`role`, `isAgentHost`, `baoReachable`), runs the dotfiles
+installer for tools, and runs agent-sync on agent hosts. Secrets aren't rendered
+— the per-tool wrappers read Bao at call time (see below).
 
 There's no push/control-node step: every box self-converges on an hourly
 `chezmoi update` cron (`run_after_02-install-sync-cron`).
@@ -44,22 +43,20 @@ There's no push/control-node step: every box self-converges on an hourly
 
 ## Secrets
 
-Secrets live in OpenBao (`kv/projects/*`) and are rendered at apply time — e.g.
-`home/private_dot_config/linear-tui/env.tmpl` pulls `kv/projects/linear`. The
-rendered file is `0600` (`private_` prefix) and is `.gitignore`d.
+Secrets live in OpenBao (`kv/projects/*`) and **never touch the repo**. Rather
+than render secret files, the per-tool wrappers (linear-tui, `scw`) read Bao at
+call time on every box, so rotation is just `bao kv patch …`.
 
-**Known blocker:** OpenBao is reachable from Spark but **not from the fleet**
-(TLS/CA trust or the port-less proxy). So `baoReachable` is false on the tinys,
-and `.chezmoiignore` skips the secret file there — the existing
-`dotfiles-fleet-linear-key` materialize stays the fleet path until Bao-on-fleet
-(CA trust + per-machine AppRole) is solved. That same work unblocks the VPC plan.
+Bao-on-fleet is **resolved** (2026-06-17): a Tailscale ACL grant plus a per-box
+scoped read-only AppRole token in `~/.vault-token` (refreshed by `bao-relogin`)
+let every machine reach Bao, so the old `dotfiles-fleet-linear-key` materialize
+was retired. `.chezmoi.toml.tmpl` still computes `baoReachable` per host. See
+`docs/architecture.md` for the full account.
 
-## Coexistence & cutover (transition state)
+## Status
 
-- The current `dotfiles` commit-hook fan-out is **still live and untouched**.
-  Both it and chezmoi's run script call `install.sh`, so they don't fight; they
-  just both keep tooling fresh.
-- Per-box cutover = run `chezmoi init --apply` there, then disable the fan-out
-  for that box. Do this deliberately, one box at a time, after verifying parity.
-- Nothing here has been applied to a live home yet — see `docs/architecture.md`
-  for status and the staged plan.
+chezmoi is the **live** manager across the fleet (spark + eigil + dicte + pi3 +
+laptop), converging via the hourly `chezmoi-sync` cron; only ingvild is held back
+for a hands-on `chezmoi init` session. The old `dotfiles` commit-hook fan-out is
+**retired** (hook + `dotfiles-fleet-sync` deleted). See `docs/architecture.md`
+for the full migration log.
