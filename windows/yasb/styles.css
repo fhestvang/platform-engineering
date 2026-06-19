@@ -100,6 +100,28 @@
   color: #f38ba8;
 }
 
+/* ── Media: minimal transport controls (Windows SMTC) ───────────────────── */
+.media-widget {
+  background-color: rgba(24, 24, 37, 0.7);
+  border-radius: 7px;
+  margin: 5px 3px;
+  padding: 0 2px;
+}
+.media-widget .btn {
+  background-color: transparent;
+  color: #c5cadb;
+  border: none;
+  border-radius: 7px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+.media-widget .btn:hover {
+  color: #ffffff;
+}
+.media-widget .btn.disabled {
+  color: #45475a;
+}
+
 /* ── System tray: distinct accent so it reads as its own zone ────────────── */
 .systray {
   background-color: rgba(24, 24, 37, 0.7);

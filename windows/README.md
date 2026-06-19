@@ -2,11 +2,17 @@
 
 Tracked copies of the laptop's Windows-side WM configs:
 
-| repo file              | Windows target                          |
-| ---------------------- | --------------------------------------- |
-| `glazewm/config.yaml`  | `%USERPROFILE%\.glzr\glazewm\config.yaml`  |
-| `yasb/config.yaml`     | `%USERPROFILE%\.config\yasb\config.yaml`   |
-| `yasb/styles.css`      | `%USERPROFILE%\.config\yasb\styles.css`    |
+| repo file                   | Windows target                                              |
+| --------------------------- | ---------------------------------------------------------- |
+| `glazewm/config.yaml`       | `%USERPROFILE%\.glzr\glazewm\config.yaml`                  |
+| `yasb/config.yaml`          | `%USERPROFILE%\.config\yasb\config.yaml`                   |
+| `yasb/styles.css`           | `%USERPROFILE%\.config\yasb\styles.css`                    |
+| `flowlauncher/FHH Mono.xaml`| `%APPDATA%\FlowLauncher\Themes\FHH Mono.xaml`              |
+| `youtube-music/fhh-mono.css`| `%APPDATA%\YouTube Music\themes\fhh-mono.css`              |
+
+Only the portable theme files are tracked for Flow Launcher and th-ch/youtube-music.
+Their `Settings.json` / `config.json` are left out — they hold machine-specific,
+volatile state (window positions, exe paths, the current track URL).
 
 These live **outside** the chezmoi root (`home/`), so `chezmoi apply` ignores
 them. They can't be symlinked across the WSL/Windows boundary (Developer Mode is

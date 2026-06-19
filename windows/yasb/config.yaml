@@ -36,7 +36,7 @@ bars:
     widgets:
       left: ["glazewm_workspaces", "glazewm_tiling_direction"]
       center: ["clock"]
-      right: ["cpu", "memory", "volume", "wifi", "battery", "systray"]
+      right: ["cpu", "memory", "media", "volume", "wifi", "battery", "systray"]
 
 widgets:
   glazewm_workspaces:
@@ -72,6 +72,18 @@ widgets:
       label: " {virtual_mem_percent}%"
       label_alt: " {virtual_mem_free}"
       update_interval: 5000
+
+  media:
+    type: "yasb.media.MediaWidget"
+    options:
+      # Minimal transport: prev / play-pause / next. Drives whatever app owns the
+      # Windows media session (YouTube Music desktop, Spotify, a browser tab...).
+      # Hidden entirely when nothing is playing. Flip controls_only to false if you
+      # want the scrolling track title back.
+      hide_empty: true
+      controls_only: true
+      controls_left: true
+      show_thumbnail: false
 
   volume:
     type: "yasb.volume.VolumeWidget"

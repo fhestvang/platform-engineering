@@ -1,0 +1,129 @@
+/* ── FHH Mono — refined monochrome for YouTube Music ──────────────────────
+   Matched to the YASB bar + Flow Launcher: Catppuccin Mocha surfaces, the
+   YouTube red replaced with neutral text-tone, album-art gradients flattened
+   so the now-playing page stays calm and monochrome. */
+
+html[dark],
+ytmusic-app {
+  --yt-spec-base-background: #11111b;
+  --yt-spec-raised-background: #181825;
+  --yt-spec-menu-background: #1e1e2e;
+  --yt-spec-general-background-a: #11111b;
+  --yt-spec-general-background-b: #181825;
+  --yt-spec-general-background-c: #181825;
+  --yt-spec-brand-background-primary: #11111b;
+  --yt-spec-brand-background-secondary: #181825;
+
+  --yt-spec-text-primary: #e6e9f2;
+  --yt-spec-text-secondary: #a6adc8;
+  --yt-spec-text-disabled: #6c7086;
+  --yt-spec-icon-active-other: #cdd6f4;
+  --yt-spec-icon-inactive: #a6adc8;
+
+  /* Kill the brand red — route every accent to neutral text-tone */
+  --yt-spec-static-brand-red: #cdd6f4;
+  --yt-spec-static-brand-white: #cdd6f4;
+  --yt-spec-call-to-action: #cdd6f4;
+  --yt-spec-call-to-action-inverse: #11111b;
+  --yt-spec-suggested-action: #313244;
+  --yt-spec-themed-blue: #cdd6f4;
+  --yt-spec-error-indicator: #f38ba8;
+
+  --ytmusic-general-background-a: #11111b;
+  --ytmusic-general-background-b: #181825;
+  --ytmusic-brand-background-solid: #11111b;
+}
+
+/* App + nav + side surfaces */
+ytmusic-app,
+ytmusic-app-layout,
+#layout.ytmusic-app-layout,
+ytmusic-nav-bar,
+#nav-bar-background.ytmusic-nav-bar,
+tp-yt-app-drawer,
+#mini-guide.ytmusic-app-layout,
+#guide-content.ytmusic-guide-renderer {
+  background: #11111b !important;
+}
+
+/* Search box in the nav bar */
+.search-box.ytmusic-search-box,
+ytmusic-search-box[opened] .search-box.ytmusic-search-box {
+  background-color: #181825 !important;
+  border: 1px solid #313244 !important;
+}
+
+/* Flatten the album-art gradient on the now-playing page */
+ytmusic-player-page,
+#player-page,
+.background-gradient.ytmusic-player-page,
+#song-media-window.ytmusic-player-page {
+  --ytmusic-player-page-background: #11111b !important;
+  background: #11111b !important;
+}
+
+/* Player bar (bottom transport) */
+ytmusic-player-bar,
+.ytmusic-player-bar.middle-controls,
+ytmusic-player-bar[slot="player-bar"] {
+  background: #181825 !important;
+  border-top: 1px solid #313244 !important;
+}
+
+/* Progress + volume sliders → monochrome */
+#progress-bar.ytmusic-player-bar,
+tp-yt-paper-slider,
+#sliderContainer tp-yt-paper-slider {
+  --paper-slider-active-color: #cdd6f4 !important;
+  --paper-slider-secondary-color: #45475a !important;
+  --paper-slider-knob-color: #cdd6f4 !important;
+  --paper-slider-knob-start-color: #cdd6f4 !important;
+  --paper-slider-knob-start-border-color: #cdd6f4 !important;
+  --paper-slider-pin-color: #cdd6f4 !important;
+  --paper-slider-container-color: #313244 !important;
+}
+
+/* Primary buttons / chips */
+ytmusic-chip-cloud-chip-renderer[is-selected],
+.ytmusic-chip-cloud-chip-renderer[aria-selected="true"] {
+  background: #cdd6f4 !important;
+  color: #11111b !important;
+}
+
+/* Hover rows + menus */
+ytmusic-responsive-list-item-renderer:hover,
+tp-yt-paper-item:hover,
+ytmusic-menu-service-item-renderer:hover {
+  background: rgba(205, 214, 244, 0.08) !important;
+}
+
+/* ── th-ch in-app menu bar (the top "Plugins/Options/View…" strip) ────────
+   Stable hooks: the menu root is nav[data-ytmd-main-panel], dropdowns are
+   ul[data-ytmd-sub-panel]. Pin both to the worktop dark so the bar stops
+   reading bluish over the album gradient. */
+nav[data-ytmd-main-panel] {
+  background: #11111b !important;
+  border-bottom: 1px solid #313244 !important;
+  backdrop-filter: none !important;
+}
+nav[data-ytmd-main-panel] * {
+  color: #a6adc8 !important;
+}
+nav[data-ytmd-main-panel] *:hover {
+  color: #e6e9f2 !important;
+}
+ul[data-ytmd-sub-panel] {
+  background: #1e1e2e !important;
+  border: 1px solid #313244 !important;
+  backdrop-filter: none !important;
+}
+ul[data-ytmd-sub-panel] li:hover,
+ul[data-ytmd-sub-panel] [role="menuitem"]:hover {
+  background: rgba(205, 214, 244, 0.08) !important;
+}
+
+/* Scrollbar to match the rest of the worktop */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #6c7086; }

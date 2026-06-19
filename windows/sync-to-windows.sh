@@ -27,6 +27,8 @@ map=(
   "glazewm/config.yaml:.glzr/glazewm/config.yaml"
   "yasb/config.yaml:.config/yasb/config.yaml"
   "yasb/styles.css:.config/yasb/styles.css"
+  "flowlauncher/FHH Mono.xaml:AppData/Roaming/FlowLauncher/Themes/FHH Mono.xaml"
+  "youtube-music/fhh-mono.css:AppData/Roaming/YouTube Music/themes/fhh-mono.css"
 )
 
 mode="push"
