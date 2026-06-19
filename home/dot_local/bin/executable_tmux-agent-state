@@ -62,14 +62,14 @@ case "$action" in
     ring_terminal_bell
     ;;
   done)
-    set_state done
+    set_state "done"
     ring_terminal_bell
     ;;
   idle)
     previous="$(show_state)"
     case "$previous" in
       working|blocked)
-        set_state done
+        set_state "done"
         ring_terminal_bell
         ;;
       *)
@@ -79,7 +79,7 @@ case "$action" in
     ;;
   seen)
     previous="$(show_state)"
-    if [ "$previous" = done ]; then
+    if [ "$previous" = "done" ]; then
       clear_state
     fi
     ;;

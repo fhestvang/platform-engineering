@@ -1,4 +1,5 @@
 # Shared interactive shell configuration for Bash and Zsh.
+# shellcheck shell=bash  # sourced file; lint as bash (shellcheck has no zsh mode)
 
 # Fall back to C.UTF-8 when the inherited locale isn't generated on this host.
 # Minimal cloud images and Raspberry Pi OS often lack en_US.UTF-8, which the SSH
@@ -43,6 +44,7 @@ dotfiles_spark_command() {
     quoted+=" $(printf '%q' "$arg")"
   done
 
+  # shellcheck disable=SC2033  # 'spark' is the ssh Host alias, not the spark() function
   if [ -t 0 ] && [ -t 1 ]; then
     ssh -o ClearAllForwardings=yes -t spark "$command_prefix$quoted"
   else
@@ -221,6 +223,7 @@ ts() {
   else
     __dotfiles_wezterm_set_user_var FHH_HOST spark
     __dotfiles_wezterm_set_user_var FHH_IMAGE_PASTE_HOST spark
+    # shellcheck disable=SC2033  # 'spark' is the ssh Host alias, not the spark() function
     ssh -tt -o ClearAllForwardings=yes spark "$remote_command"
   fi
 }
@@ -419,7 +422,7 @@ if dotfiles_have_linux yazi; then
     yazi "$@" --cwd-file="$tmp"
     cwd="$(cat "$tmp" 2>/dev/null)"
     rm -f "$tmp"
-    [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+    [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && { builtin cd -- "$cwd" || return; }
   }
 fi
 
@@ -481,6 +484,7 @@ unset dotfiles_openbao_env_candidate
 
 if [ -n "$dotfiles_openbao_env_script" ]; then
   dotfiles_openbao_env_cache="${XDG_CACHE_HOME:-$HOME/.cache}/fos/openbao-github-token.env"
+  # shellcheck source=/dev/null  # runtime cache path, not present at lint time
   [ -r "$dotfiles_openbao_env_cache" ] && . "$dotfiles_openbao_env_cache"
   if [ ! -r "$dotfiles_openbao_env_cache" ] || \
      [ -n "$(find "$dotfiles_openbao_env_cache" -mmin +720 2>/dev/null)" ]; then
@@ -522,7 +526,7 @@ agent-private() {
 
 gc() {
   if dotfiles_is_spark; then
-    (cd "$HOME/gc" 2>/dev/null || cd "$HOME"; command gc "$@")
+    (cd "$HOME/gc" 2>/dev/null || cd "$HOME" || exit; command gc "$@")
   else
     dotfiles_spark_command "export PATH=\$HOME/opt/go/bin:\$HOME/go/bin:\$HOME/.local/bin:\$HOME/.cargo/bin:\$PATH; cd ~/gc 2>/dev/null || cd ~; gc" "$@"
   fi

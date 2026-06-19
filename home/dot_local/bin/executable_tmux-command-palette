@@ -226,6 +226,7 @@ emit_scripts() {
     [ "$path" != "$HOME/.local/bin/tmux-command-palette" ] || continue
 
     base="$(basename "$path")"
+    # shellcheck disable=SC2088  # "~/bin" is a display label, not a path to expand
     case "$path" in
       "$HOME/.local/bin/"*) source="dotfiles/bin" ;;
       "$HOME/bin/"*) source="~/bin" ;;

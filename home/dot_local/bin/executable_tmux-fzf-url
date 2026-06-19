@@ -68,6 +68,7 @@ if [ -z "$script" ]; then
   exit 1
 fi
 
+# shellcheck source=/dev/null  # dynamic self-source for the test harness
 __FZF_URL_TESTING=1 source "$script"
 
 if ! ensure_xre; then
@@ -139,6 +140,7 @@ if [ -z "$items" ]; then
   exit 0
 fi
 
+# shellcheck disable=SC2034  # consumed by the sourced test harness
 custom_open="$open_cmd"
 _copy_cmd="$(get_copy_cmd "$copy_cmd")"
 

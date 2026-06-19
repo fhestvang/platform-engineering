@@ -328,6 +328,7 @@ if [ "$ext" = "bmp" ]; then
 fi
 
 if is_local_host; then
+  # shellcheck disable=SC2088  # literal "~/" is the input prefix we match, not a path to expand
   case "$REMOTE_DIR" in
     /*) local_dir_abs="$REMOTE_DIR" ;;
     "~/"*) local_dir_abs="$HOME/${REMOTE_DIR#~/}" ;;
@@ -350,6 +351,7 @@ if is_local_host; then
 fi
 
 remote_home="$(ssh -o BatchMode=yes -o ClearAllForwardings=yes "$HOST" 'printf %s "$HOME"')"
+# shellcheck disable=SC2088  # literal "~/" is the input prefix we match, not a path to expand
 case "$REMOTE_DIR" in
   /*) remote_dir_abs="$REMOTE_DIR" ;;
   "~/"*) remote_dir_abs="$remote_home/${REMOTE_DIR#~/}" ;;

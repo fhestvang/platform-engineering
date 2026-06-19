@@ -1,3 +1,4 @@
+# shellcheck shell=bash  # sourced fragment, no shebang
 # WSLg sometimes starts shells/tmux without GUI environment variables.
 # Keep clipboard and desktop integrations pointed at the Linux session.
 if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null && [ -S /mnt/wslg/.X11-unix/X0 ]; then
