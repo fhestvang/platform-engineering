@@ -42,7 +42,7 @@ window_effects:
       opacity: '94%'
   other_windows:
     border:
-      enabled: true
+      enabled: false
       color: '#45475a'
     corner_style:
       enabled: true

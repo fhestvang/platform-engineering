@@ -45,16 +45,18 @@
   border: none;
   border-radius: 7px;
 }
-.glazewm-workspaces .ws-btn.populated {
+.glazewm-workspaces .ws-btn.populated,
+.glazewm-workspaces .ws-btn.active_populated {
   color: #9399b2;
 }
 .glazewm-workspaces .ws-btn:hover {
   background-color: #45475a;
   color: #cdd6f4;
 }
-.glazewm-workspaces .ws-btn.focused {
-  color: #ffffff;
-  background-color: rgba(205, 214, 244, 0.16);
+.glazewm-workspaces .ws-btn.focused_populated,
+.glazewm-workspaces .ws-btn.focused_empty {
+  color: #e6e9f2;
+  background-color: rgba(205, 214, 244, 0.22);
 }
 
 /* ── GlazeWM tiling-direction (split) indicator ─────────────────────────── */
