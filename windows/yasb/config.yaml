@@ -34,7 +34,7 @@ bars:
       bottom: 0
       right: 0
     widgets:
-      left: ["glazewm_workspaces"]
+      left: ["glazewm_workspaces", "glazewm_tiling_direction"]
       center: ["clock"]
       right: ["cpu", "memory", "volume", "wifi", "battery", "systray"]
 
@@ -43,6 +43,14 @@ widgets:
     type: "glazewm.workspaces.GlazewmWorkspacesWidget"
     options:
       offline_label: "GlazeWM offline"
+
+  glazewm_tiling_direction:
+    type: "glazewm.tiling_direction.GlazewmTilingDirectionWidget"
+    options:
+      # Shows the active split direction; click to flip it. ↔ = next window splits
+      # side-by-side, ↕ = next window stacks top/bottom.
+      horizontal_label: "↔"
+      vertical_label: "↕"
 
   clock:
     type: "yasb.clock.ClockWidget"

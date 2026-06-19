@@ -57,6 +57,28 @@
   background-color: rgba(205, 214, 244, 0.16);
 }
 
+/* ── GlazeWM tiling-direction (split) indicator ─────────────────────────── */
+/* Subtle, muted to match the workspace pills; lights up on hover. */
+.glazewm-tiling-direction {
+  background-color: rgba(24, 24, 37, 0.7);
+  border-radius: 7px;
+  padding: 0 2px;
+  margin: 5px 3px;
+}
+.glazewm-tiling-direction .btn {
+  font-size: 13px;
+  background-color: transparent;
+  color: #6c7086;
+  margin: 3px 2px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 7px;
+}
+.glazewm-tiling-direction .btn:hover {
+  background-color: #45475a;
+  color: #cdd6f4;
+}
+
 /* ── Clock: refined, no icon, day + date + time ─────────────────────────── */
 .clock-widget .label {
   color: #e6e9f0;
