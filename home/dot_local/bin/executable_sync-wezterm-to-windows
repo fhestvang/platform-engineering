@@ -10,7 +10,11 @@
 # See docs/wezterm-screenshot-wrong-pane.md for why this exists.
 set -euo pipefail
 
-repo_cfg="$(cd "$(dirname "$0")/.." && pwd)/wezterm/.config/wezterm/wezterm.lua"
+# Canonical laptop WezTerm config lives in the dotfiles repo (see
+# ~/github/dotfiles/AGENTS.md). Resolve it directly instead of relative to $0:
+# chezmoi installs this script to ~/.local/bin, where the old "$(dirname $0)/.."
+# path resolved to a nonexistent ~/.local/wezterm/... and the sync always failed.
+repo_cfg="${WEZTERM_REPO_CONFIG:-$HOME/github/dotfiles/wezterm/.config/wezterm/wezterm.lua}"
 [ -f "$repo_cfg" ] || { echo "repo config not found: $repo_cfg" >&2; exit 1; }
 
 command -v cmd.exe >/dev/null 2>&1 || {
