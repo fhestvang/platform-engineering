@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-target="${OPEN_ON_LAPTOP_SSH:-laptop}"
+target="${OPEN_ON_LAPTOP_SSH:-laptop-win}"
 mode="${OPEN_ON_LAPTOP_MODE:---new-window}"
 log_file="${OPEN_ON_LAPTOP_LOG:-$HOME/.cache/open-on-laptop.log}"
-method="${OPEN_ON_LAPTOP_METHOD:-start}"
+method="${OPEN_ON_LAPTOP_METHOD:-task}"
+ssh_opts=(-T -o BatchMode=yes -o RemoteCommand=none -o RequestTTY=no)
 
 urls=("$@")
 if [ "${#urls[@]}" -eq 0 ]; then
@@ -31,16 +32,16 @@ log() {
   printf '%s %s\n' "$(date -Is)" "$*" >>"$log_file"
 }
 
-# Fast path (default): hand each URL to the laptop's default browser via
-# `cmd /c start`, which opens a tab in the already-running Chrome (~0.1s vs the
-# ~1-2s scheduled-task dispatch). Set OPEN_ON_LAPTOP_METHOD=task to force the
-# scheduled-task path (only needed if no browser is running / SSH session-0).
+# Fast path: hand each URL to the laptop's default browser via `cmd /c start`.
+# Over Windows SSH this can return success without opening in the interactive
+# desktop session, so the default uses the scheduled-task bridge instead. Set
+# OPEN_ON_LAPTOP_METHOD=start only for one-off debugging.
 if [ "$method" = "start" ]; then
   log "target=$target method=start urls=${urls[*]}"
   rc=0
   for url in "${urls[@]}"; do
     safe="${url//\"/}"
-    if ! ssh -o BatchMode=yes "$target" "cmd.exe /c start \"\" \"$safe\""; then
+    if ! ssh "${ssh_opts[@]}" "$target" "cmd.exe /c start \"\" \"$safe\""; then
       rc=1
     fi
   done
@@ -73,8 +74,8 @@ if (\$method -eq 'task') {
   Set-Content -Path \$queuePath -Value \$urlsBase64 -Encoding ASCII
   Start-ScheduledTask -TaskName 'SparkOpenUrl'
   \$remaining = \$urlsBase64
-  for (\$i = 0; \$i -lt 20; \$i++) {
-    Start-Sleep -Milliseconds 60
+  for (\$i = 0; \$i -lt 60; \$i++) {
+    Start-Sleep -Milliseconds 100
     if (-not (Test-Path \$queuePath)) { \$remaining = @(); break }
     \$remaining = Get-Content -Path \$queuePath -ErrorAction SilentlyContinue |
       Where-Object { -not [string]::IsNullOrWhiteSpace(\$_) }
@@ -84,7 +85,7 @@ if (\$method -eq 'task') {
     exit 0
   }
   \$urlsBase64 = \$remaining
-  Clear-Content -Path \$queuePath -ErrorAction SilentlyContinue
+  throw "SparkOpenUrl scheduled task did not consume \$queuePath"
 }
 \$chromeCandidates = @(
   "\$env:ProgramFiles\\Google\\Chrome\\Application\\chrome.exe",
@@ -116,7 +117,7 @@ PS
 encoded_command=$(printf '%s' "$ps_script" | iconv -f UTF-8 -t UTF-16LE | base64 -w0)
 
 log "target=$target method=$method mode=$mode urls=${urls[*]}"
-if ! ssh -o BatchMode=yes "$target" powershell.exe -NoProfile -NonInteractive -EncodedCommand "$encoded_command"; then
+if ! ssh "${ssh_opts[@]}" "$target" powershell.exe -NoProfile -NonInteractive -EncodedCommand "$encoded_command"; then
   log "failed target=$target method=$method"
   notify "open-on-laptop: failed to open Chrome via SSH host '$target'"
   exit 1
