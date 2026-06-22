@@ -28,7 +28,8 @@ gum = "latest"
 curlie = "latest"
 {{ if .isAgentHost }}
 # --- agent harnesses (float, agent hosts only) ---
-"npm:@anthropic-ai/claude-code" = "latest"
+# Claude Code ships a native binary; avoid the npm wrapper's postinstall path.
+claude = "latest"
 "npm:@openai/codex" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 {{ end -}}
