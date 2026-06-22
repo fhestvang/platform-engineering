@@ -341,32 +341,9 @@ if [ -r "$HOME/.cargo/env" ]; then
   . "$HOME/.cargo/env"
 fi
 
-export NVM_DIR="$HOME/.nvm"
-if [ -s "$NVM_DIR/nvm.sh" ]; then
-  nvm() {
-    unset -f nvm
-    . "$NVM_DIR/nvm.sh"
-    nvm "$@"
-  }
-fi
-
-if [ -n "${BASH_VERSION:-}" ] && [ -s "$NVM_DIR/bash_completion" ]; then
-  . "$NVM_DIR/bash_completion"
-fi
-
-FNM_PATH="$HOME/.local/share/fnm"
-if [ -d "$FNM_PATH" ]; then
-  dotfiles_path_prepend "$FNM_PATH"
-  dotfiles_refresh_linux_path
-  if dotfiles_have_linux fnm; then
-    if [ -n "${ZSH_VERSION:-}" ]; then
-      eval "$(fnm env --shell zsh)"
-    else
-      eval "$(fnm env --shell bash)"
-    fi
-    dotfiles_refresh_linux_path
-  fi
-fi
+# Node and other runtimes come from mise (see ~/.config/mise/config.toml).
+# nvm and fnm were retired 2026-06-22 in favour of a single mise manifest so
+# node/agent versions stay aligned fleet-wide instead of drifting per machine.
 
 if dotfiles_have_linux mise; then
   if [ -n "${ZSH_VERSION:-}" ]; then

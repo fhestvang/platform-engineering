@@ -1,0 +1,34 @@
+# Managed by chezmoi (home/dot_config/mise/config.toml.tmpl).
+# Single declarative tool manifest for the fleet. chezmoi owns dotfiles + this
+# manifest; mise owns the tools. New machine: chezmoi apply -> mise install.
+#
+# Tiering:
+#   foundation  -> exact pins, every host. Critical path (nvim/LazyVim, node,
+#                  go, lazygit) must never silently move and break.
+#   utility     -> float (latest); stable CLIs where churn is harmless.
+#   agents      -> float (latest), agent hosts only. They ship daily; pinning
+#                  them just creates lag. run_after_12 runs `mise upgrade` each
+#                  converge so agent hosts track upstream automatically.
+
+[tools]
+# --- foundation (exact pins, all hosts) ---
+node = "22.22.2"
+neovim = "0.12.3"
+lazygit = "0.62.0"
+go = "1.25.9"
+
+# --- utility CLIs (float, all hosts) ---
+just = "latest"
+stern = "latest"
+kubectx = "latest"
+kubens = "latest"
+watchexec = "latest"
+hyperfine = "latest"
+gum = "latest"
+curlie = "latest"
+{{ if .isAgentHost }}
+# --- agent harnesses (float, agent hosts only) ---
+"npm:@anthropic-ai/claude-code" = "latest"
+"npm:@openai/codex" = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"
+{{ end -}}
