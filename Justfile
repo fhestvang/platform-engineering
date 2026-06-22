@@ -102,9 +102,13 @@ scw-instance-tofu *args:
     command -v tofu >/dev/null 2>&1 || { echo "ERROR: missing tofu" >&2; exit 1; }
     command -v bao >/dev/null 2>&1 || { echo "ERROR: missing bao" >&2; exit 1; }
     export BAO_ADDR="${BAO_ADDR:-https://bao.olm-hops.ts.net}"
+    scw_config_dir="$(mktemp -d)"
+    trap 'rm -rf "$scw_config_dir"' EXIT
+    : > "$scw_config_dir/config.yaml"
+    export SCW_CONFIG_PATH="$scw_config_dir/config.yaml"
     export SCW_ACCESS_KEY="$(bao kv get -field=access_key kv/projects/scaleway/cli)"
     export SCW_SECRET_KEY="$(bao kv get -field=secret_key kv/projects/scaleway/cli)"
-    export SCW_DEFAULT_PROJECT_ID="${SCW_DEFAULT_PROJECT_ID:-d0be35ee-8579-4bd6-89e3-18d55aa5367a}"
+    unset SCW_DEFAULT_PROJECT_ID SCW_DEFAULT_REGION SCW_DEFAULT_ZONE
     tofu -chdir='{{scw_instance_dir}}' {{args}}
 
 # Initialize the Scaleway instance OpenTofu root module.
