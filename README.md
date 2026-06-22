@@ -22,6 +22,18 @@ chezmoi is the convergence engine. Dotfiles, nvim, and tool configs now live
 
 ## Bootstrap a machine
 
+For a Scaleway agent VM, use the tagged, non-interactive bootstrap script:
+
+```sh
+bash scripts/bootstrap-scaleway-agent.sh <public-ip> scw-agent-02
+```
+
+It creates a one-use `tag:scw-agent` Tailscale auth key, provisions fleet Bao
+AppRole material, runs chezmoi, and verifies `mise` + the agent harnesses. See
+`docs/scaleway-agent-bootstrap.md`.
+
+For a normal manually-enrolled machine:
+
 ```sh
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
 ~/.local/bin/chezmoi init --apply https://github.com/fhestvang/fleet-provisioning.git

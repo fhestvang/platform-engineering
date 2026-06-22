@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Refresh the fleet read-only Bao token as soon as the bao CLI exists.
+#
+# Bootstrap order matters on new agent hosts:
+#   run_after_10 installs bao
+#   this hook turns ~/.config/bao/approle into ~/.vault-token
+#   run_after_20 can then read the GitHub token from Bao and clone fhh-toolkit
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$PATH"
+export BAO_ADDR="${BAO_ADDR:-https://bao.olm-hops.ts.net}"
+
+if [ ! -r "$HOME/.config/bao/approle" ]; then
+  echo "bao-relogin: no AppRole material on this host, skipping"
+  exit 0
+fi
+
+if ! command -v bao >/dev/null 2>&1; then
+  echo "bao-relogin: bao not on PATH yet, skipping"
+  exit 0
+fi
+
+if command -v bao-relogin >/dev/null 2>&1; then
+  bao-relogin || echo "bao-relogin: refresh failed (continuing)"
+else
+  echo "bao-relogin: helper not on PATH yet, skipping"
+fi

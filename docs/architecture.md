@@ -34,13 +34,19 @@ This repo converges them onto established tools.
 
 ## VPC path (cattle), when instances exist
 
-1. Terraform/OpenTofu creates instances tagged `fleet`.
-2. cloud-init: install Tailscale with an ephemeral, tagged, pre-auth key (joins
-   the tailnet, no manual key copy), set the hostname to `scw-*`, then
-   `chezmoi init --apply`.
-3. They self-converge on the hourly `chezmoi update` cron — no control-node or
-   Ansible step; discovery is just Tailscale + tags.
-4. Access via Tailscale SSH + ACLs (no per-host authorized_keys / known_hosts).
+1. Terraform/OpenTofu creates instances with hostnames matching `scw-*`.
+2. Operator/bootstrap path creates a one-use Tailscale key tagged
+   `tag:scw-agent`, provisions fleet Bao AppRole material, joins the tailnet
+   with Tailscale SSH enabled, then runs `chezmoi init --apply --force`.
+   Current implementation: `scripts/bootstrap-scaleway-agent.sh`.
+3. `run_after_10` installs base tools including `bao`; `run_after_11` refreshes
+   `~/.vault-token`; `run_after_12` converges the mise tool manifest; and
+   `run_after_20` clones/syncs private `fhh-toolkit` using a temporary
+   Bao-backed GitHub credential.
+4. They self-converge on the hourly `chezmoi update` cron — no control-node or
+   Ansible step; discovery is Tailscale + tags.
+5. Access via Tailscale SSH + ACLs (`tag:scw-agent`) plus public SSH as the
+   break-glass path during initial bootstrap.
 
 ## Migration status
 
@@ -54,7 +60,7 @@ This repo converges them onto established tools.
 | Retire the dotfiles commit-hook fan-out | ✅ done — hook + dotfiles-fleet-sync deleted |
 | **Bao reachable from the fleet** | ✅ done — ACL grant + read-only AppRole token |
 | ingvild left un-cut-over (hands-on session); laptop pending (user runs init) | ⏳ intentional |
-| Scaleway VPC lab (tag:scw-vm, cloud-init) | ✅ config in terraform/lab/, ready to apply |
+| Scaleway agent VM bootstrap (`tag:scw-agent`, chezmoi, mise, fhh-toolkit) | ✅ validated on `scw-agent-01` (2026-06-22) |
 
 ## RESOLVED (2026-06-17): OpenBao from the fleet
 
