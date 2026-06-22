@@ -50,6 +50,25 @@ The script creates a one-use, one-hour auth key tagged `tag:scw-agent`, creates
 fresh `fleet-kv` AppRole material, provisions the `fhestvang` user, joins
 Tailscale with SSH enabled, runs `chezmoi`, and verifies the agent toolchain.
 
+## Access Model
+
+Use `root` only for first bootstrap and break-glass system repair. Root is not a
+working environment and intentionally has no `mise`, agent commands, dotfiles,
+Bao wrappers, or `fhh-toolkit`.
+
+After bootstrap, use the `fhestvang` user:
+
+```sh
+ssh fhestvang@<public-ip>
+tailscale ssh fhestvang@scw-agent-02
+```
+
+Use root over Tailscale only when repairing the machine itself:
+
+```sh
+tailscale ssh root@scw-agent-02
+```
+
 ## Verification
 
 On the VM:

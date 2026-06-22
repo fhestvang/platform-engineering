@@ -59,7 +59,8 @@ This repo converges them onto established tools.
 | **Cutover: chezmoi the live manager on spark + eigil + dicte + pi3** | ✅ done (2026-06-17), pull via @hourly cron; repo made public |
 | Retire the dotfiles commit-hook fan-out | ✅ done — hook + dotfiles-fleet-sync deleted |
 | **Bao reachable from the fleet** | ✅ done — ACL grant + read-only AppRole token |
-| ingvild left un-cut-over (hands-on session); laptop pending (user runs init) | ⏳ intentional |
+| Ingvild cutover | ✅ done (2026-06-22) — `chezmoi`, Bao, mise, `fhh-toolkit`, agent config |
+| Laptop pending | ⏳ user runs init |
 | Scaleway agent VM bootstrap (`tag:scw-agent`, chezmoi, mise, fhh-toolkit) | ✅ validated on `scw-agent-01` (2026-06-22) |
 
 ## RESOLVED (2026-06-17): OpenBao from the fleet
@@ -69,11 +70,11 @@ Fixed. Added an additive Tailscale ACL grant `tag:tiny -> [svc:bao, tag:secrets]
 enabled `accept-dns` on the tinys, installed the `bao` CLI fleet-wide, and gave
 each box a scoped **read-only** AppRole token (policy `fleet-kv-read`, role
 `fleet-kv`) in `~/.vault-token` with creds in `~/.config/bao/approle` refreshed by
-`dotfiles bin/bao-relogin`. `bao kv get` verified on all tinys. The linear-tui/scw
-wrappers now read Bao at call time on every box, so `dotfiles-fleet-linear-key`
-was retired. Remaining: auto-renewal timer for the periodic token; chezmoi cutover
-(secrets already work via the wrappers, so no longer urgent). Ansible
-`hashi_vault` and the VPC cattle path are now unblocked. History below.
+`bao-relogin`. `bao kv get` verified on all tinys. The linear-tui/scw wrappers
+now read Bao at call time on every box, so `dotfiles-fleet-linear-key` was
+retired. Remaining: auto-renewal timer for the periodic token. Ansible
+`hashi_vault`, Ingvild cutover, and the VPC cattle path are now unblocked.
+History below.
 
 ## (Historical) Known blocker: OpenBao from the fleet — it's a Tailscale ACL
 
@@ -95,6 +96,6 @@ allowing the fleet tag to reach the Bao host/port, e.g.
 
 and enable MagicDNS / `--accept-dns` on the fleet nodes so `bao.olm-hops.ts.net`
 resolves there. Once the tinys can reach Bao + have a scoped read-only token in
-`~/.vault-token`, `baoReachable` flips true, chezmoi renders secrets on every box,
-and `dotfiles-fleet-linear-key` can be retired. Same unlock serves Ansible
+`~/.vault-token`, Bao-backed wrappers work on every box and
+`dotfiles-fleet-linear-key` can be retired. Same unlock serves Ansible
 `hashi_vault` and the VPC cattle path.

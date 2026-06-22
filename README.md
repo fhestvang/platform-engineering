@@ -40,18 +40,31 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
 ```
 
 That clones this repo (source is `home/`, see `.chezmoiroot`), computes
-per-machine facts (`role`, `isAgentHost`, `baoReachable`), runs the dotfiles
-installer for tools, and runs agent-sync on agent hosts. Secrets aren't rendered
-— the per-tool wrappers read Bao at call time (see below).
+stable per-machine facts (`role`, `isAgentHost`), runs the dotfiles installer
+for tools, and runs agent-sync on agent hosts. Secrets aren't rendered — the
+per-tool wrappers read Bao at call time (see below).
 
 There's no push/control-node step: every box self-converges on an hourly
 `chezmoi update` cron (`run_after_02-install-sync-cron`).
+
+## Host resource model
+
+- `root`: bootstrap and break-glass only. Do not expect `mise`, agent commands,
+  dotfiles, Bao wrappers, or `fhh-toolkit` in `/root`.
+- `fhestvang`: the normal working user. This is where chezmoi, mise shims, Bao
+  wrappers, shell config, and agent runtime config live.
+- `ansible`: legacy/admin user on the tinys. Use it for cluster/system repair
+  when needed, not as the day-to-day environment.
+- Bao access is a fleet baseline. Tinys need it for wrappers, Atuin, and
+  convergence, but Bao access does not make a host an agent host.
+- `fhh-toolkit` is agent-host only. It is expected on Spark, laptop, Ingvild,
+  and `scw-agent-*`; it is intentionally absent on ordinary `tiny` hosts like
+  eigil and dicte.
 
 ## Per-machine facts (`home/.chezmoi.toml.tmpl`)
 
 - `role`: `spark` | `laptop` | `pi` | `ingvild` | `scw-agent` | `tiny`
 - `isAgentHost`: spark/laptop/ingvild/`scw-*` hosts get agent-definition sync; tinys do not
-- `baoReachable`: whether OpenBao answers from this host
 
 ## Secrets
 
@@ -62,13 +75,11 @@ call time on every box, so rotation is just `bao kv patch …`.
 Bao-on-fleet is **resolved** (2026-06-17): a Tailscale ACL grant plus a per-box
 scoped read-only AppRole token in `~/.vault-token` (refreshed by `bao-relogin`)
 let every machine reach Bao, so the old `dotfiles-fleet-linear-key` materialize
-was retired. `.chezmoi.toml.tmpl` still computes `baoReachable` per host. See
-`docs/architecture.md` for the full account.
+was retired. See `docs/architecture.md` for the full account.
 
 ## Status
 
-chezmoi is the **live** manager across the fleet (spark + eigil + dicte + pi3 +
-laptop), converging via the hourly `chezmoi-sync` cron; only ingvild is held back
-for a hands-on `chezmoi init` session. The old `dotfiles` commit-hook fan-out is
-**retired** (hook + `dotfiles-fleet-sync` deleted). See `docs/architecture.md`
-for the full migration log.
+chezmoi is the **live** manager across the fleet (spark + eigil + ingvild +
+dicte + pi3 + laptop), converging via the hourly `chezmoi-sync` cron. The old
+`dotfiles` commit-hook fan-out is **retired** (hook + `dotfiles-fleet-sync`
+deleted). See `docs/architecture.md` for the full migration log.

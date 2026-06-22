@@ -1,4 +1,6 @@
-{{- /* Per-machine facts, computed once at `chezmoi init`. */ -}}
+{{- /* Stable per-machine facts, computed once at `chezmoi init`.
+      Runtime reachability (Bao, GitHub, services) is checked by run_after
+      scripts so it can heal when ACLs or DNS change after init. */ -}}
 {{- $hostname := .chezmoi.hostname -}}
 {{- $role := "tiny" -}}
 {{- if eq $hostname "spark-0cf9" }}{{ $role = "spark" }}{{ end -}}
@@ -7,10 +9,7 @@
 {{- if eq $hostname "ingvild" }}{{ $role = "ingvild" }}{{ end -}}
 {{- if hasPrefix "scw-" (lower $hostname) }}{{ $role = "scw-agent" }}{{ end -}}
 {{- $isAgentHost := or (eq $role "spark") (eq $role "laptop") (eq $role "ingvild") (eq $role "scw-agent") -}}
-{{- /* Is OpenBao reachable from here? (fleet boxes currently are NOT). */ -}}
-{{- $baoProbe := output "sh" "-c" "BAO_ADDR=https://bao.olm-hops.ts.net bao kv get -field=api_key kv/projects/linear >/dev/null 2>&1 && echo yes || echo no" | trim -}}
 [data]
     hostname = {{ $hostname | quote }}
     role = {{ $role | quote }}
     isAgentHost = {{ $isAgentHost }}
-    baoReachable = {{ eq $baoProbe "yes" }}
