@@ -5,7 +5,7 @@
 # interactivity guard below and return before common.sh can set PATH, so without
 # this a remote command can't find ~/.local/bin tools (zsh, eza, mise, starship).
 # Idempotent: skips dirs already on PATH, so it never double-prepends.
-for __dotfiles_bin in "$HOME/.local/bin" "$HOME/bin"; do
+for __dotfiles_bin in "$HOME/.local/share/mise/shims" "$HOME/.local/bin" "$HOME/bin"; do
   case ":$PATH:" in
     *":$__dotfiles_bin:"*) ;;
     *) [ -d "$__dotfiles_bin" ] && PATH="$__dotfiles_bin:$PATH" ;;

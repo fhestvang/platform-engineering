@@ -6,6 +6,19 @@
 # by the system store, so no VAULT_CACERT needed.
 export VAULT_ADDR="https://bao.olm-hops.ts.net"
 
+# mise-managed tools (node, nvim, codex, claude, pi, etc.) are exposed via
+# shims. Keep this in .zshenv so non-interactive zsh commands see the same tool
+# set as login shells.
+_mise_shims="$HOME/.local/share/mise/shims"
+if [ -d "$_mise_shims" ]; then
+  case ":$PATH:" in
+    *":$_mise_shims:"*) ;;
+    *) PATH="$_mise_shims:$PATH" ;;
+  esac
+fi
+unset _mise_shims
+export PATH
+
 # Make the user-local zsh's modules resolvable in NON-interactive shells too.
 # The relocated (deb-extracted) zsh keeps its modules outside the compiled-in
 # default path, so without this a subshell (e.g. carapace's shell-bridge) errors
