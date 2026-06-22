@@ -3,6 +3,15 @@
 .config/linear-tui/env
 **/.DS_Store
 
+# OpenTofu / Terraform local state and generated bootstrap inputs.
+**/.terraform/
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/*.tfplan
+**/*.tfvars
+**/*.auto.tfvars.json
+provisioning/**/.generated/
+
 # Agent telemetry — never versioned
 .claude/
 **/__pycache__/

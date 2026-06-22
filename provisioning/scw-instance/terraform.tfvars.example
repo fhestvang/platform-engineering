@@ -1,0 +1,22 @@
+hostname = "scw-agent-02"
+
+# Defaults match the current Scaleway project in home/dot_config/scw/config.yaml.
+# Override per plan when needed.
+# project_id = "d0be35ee-8579-4bd6-89e3-18d55aa5367a"
+# region     = "fr-par"
+# zone       = "fr-par-1"
+
+# Pick the instance shape/image deliberately per host.
+# instance_type       = "DEV1-S"
+# image               = "ubuntu_noble"
+# root_volume_size_gb = 50
+
+# These are generated into .generated/<hostname>.auto.tfvars.json by:
+#   just scw-instance-prepare scw-agent-02
+# Do not commit them.
+# operator_ssh_public_key = "ssh-ed25519 ..."
+# tailscale_auth_key      = "tskey-auth-..."
+# bao_approle_content     = <<EOT
+# VAULT_ROLE_ID=...
+# VAULT_SECRET_ID=...
+# EOT

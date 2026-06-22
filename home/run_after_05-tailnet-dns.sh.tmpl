@@ -1,6 +1,6 @@
 {{ if or (eq .role "tiny") (eq .role "pi") (eq .role "ingvild") (eq .role "scw-agent") -}}
 #!/usr/bin/env bash
-# Headless tailscale hosts (tinys, pi, ingvild, Scaleway agents) lose accept-dns
+# Headless tailscale hosts (tinys, pi, ingvild, Scaleway agent hosts) lose accept-dns
 # on reboot, which stops bao.<tailnet> from resolving and breaks every
 # Bao-dependent step (atuin login, scw/linear wrappers). Laptop/spark manage DNS
 # via the GUI client and are excluded. Re-assert it on each converge so DNS

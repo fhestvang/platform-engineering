@@ -32,13 +32,16 @@ This repo converges them onto established tools.
   + enable. Reintroduce Ansible only if real root/apt fleet management ever
   becomes necessary.
 
-## VPC path (cattle), when instances exist
+## Cloud instance path (cattle)
 
-1. Terraform/OpenTofu creates instances with hostnames matching `scw-*`.
-2. Operator/bootstrap path creates a one-use Tailscale key tagged
-   `tag:scw-agent`, provisions fleet Bao AppRole material, joins the tailnet
-   with Tailscale SSH enabled, then runs `chezmoi init --apply --force`.
-   Current implementation: `scripts/bootstrap-scaleway-agent.sh`.
+1. Terraform/OpenTofu creates provider resources. For Scaleway this is the
+   `provisioning/scw-instance` root module: instance, public IP, security
+   group, and cloud-init user-data.
+2. The operator path creates a one-use Tailscale key tagged `tag:scw-agent`,
+   provisions fleet Bao AppRole material, and passes both into cloud-init.
+   Cloud-init joins the tailnet with Tailscale SSH enabled, then runs
+   `chezmoi init --apply --force`.
+   Current implementation: `just scw-instance-*`.
 3. `run_after_10` installs base tools including `bao`; `run_after_11` refreshes
    `~/.vault-token`; `run_after_12` converges the mise tool manifest; and
    `run_after_20` clones/syncs private `fhh-toolkit` using a temporary
@@ -61,7 +64,7 @@ This repo converges them onto established tools.
 | **Bao reachable from the fleet** | ✅ done — ACL grant + read-only AppRole token |
 | Ingvild cutover | ✅ done (2026-06-22) — `chezmoi`, Bao, mise, `fhh-toolkit`, agent config |
 | Laptop pending | ⏳ user runs init |
-| Scaleway agent VM bootstrap (`tag:scw-agent`, chezmoi, mise, fhh-toolkit) | ✅ validated on `scw-agent-01` (2026-06-22) |
+| Scaleway instance bootstrap for agent hosts (`tag:scw-agent`, chezmoi, mise, fhh-toolkit) | ✅ validated on `scw-agent-01` (2026-06-22); OpenTofu/cloud-init path in progress |
 
 ## RESOLVED (2026-06-17): OpenBao from the fleet
 

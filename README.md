@@ -22,15 +22,19 @@ chezmoi is the convergence engine. Dotfiles, nvim, and tool configs now live
 
 ## Bootstrap a machine
 
-For a Scaleway agent VM, use the tagged, non-interactive bootstrap script:
+For a Scaleway instance, use the OpenTofu/cloud-init path:
 
 ```sh
-bash scripts/bootstrap-scaleway-agent.sh <public-ip> scw-agent-02
+just scw-instance-init
+just scw-instance-plan scw-agent-02
+just scw-instance-apply scw-agent-02
+just scw-instance-verify scw-agent-02
 ```
 
-It creates a one-use `tag:scw-agent` Tailscale auth key, provisions fleet Bao
-AppRole material, runs chezmoi, and verifies `mise` + the agent harnesses. See
-`docs/scaleway-agent-bootstrap.md`.
+It creates a one-use `tag:scw-agent` Tailscale auth key, renders cloud-init
+user-data, provisions fleet Bao AppRole material, runs chezmoi on first boot,
+and verifies `mise` + the agent harnesses. See `docs/scw-instance-bootstrap.md`
+and `provisioning/scw-instance/`.
 
 For a normal manually-enrolled machine:
 

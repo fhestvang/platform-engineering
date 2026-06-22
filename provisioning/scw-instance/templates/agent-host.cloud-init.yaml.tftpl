@@ -1,0 +1,61 @@
+#cloud-config
+hostname: ${hostname}
+manage_etc_hosts: true
+package_update: true
+
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - openssh-server
+  - sudo
+
+users:
+  - default
+  - name: ${operator_user}
+    gecos: Frederik Hye-Hestvang
+    groups: [adm, sudo]
+    lock_passwd: true
+    shell: /bin/bash
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    ssh_authorized_keys:
+      - ${operator_ssh_public_key}
+
+write_files:
+  - path: /run/fleet-bootstrap/tailscale-authkey
+    owner: root:root
+    permissions: '0600'
+    content: |
+      ${tailscale_auth_key}
+  - path: /run/fleet-bootstrap/approle
+    owner: root:root
+    permissions: '0600'
+    content: |
+      ${replace(chomp(bao_approle_content), "\n", "\n      ")}
+  - path: /usr/local/sbin/fleet-agent-converge
+    owner: root:root
+    permissions: '0755'
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+
+      mkdir -p "$HOME/.local/bin"
+      if [ ! -x "$HOME/.local/bin/chezmoi" ]; then
+        sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+      fi
+
+      if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
+        "$HOME/.local/bin/chezmoi" --force update
+      else
+        "$HOME/.local/bin/chezmoi" --force init --apply https://github.com/fhestvang/fleet-provisioning.git
+      fi
+
+runcmd:
+  - [bash, -lc, "install -d -m 700 -o ${operator_user} -g ${operator_user} /home/${operator_user}/.config/bao"]
+  - [bash, -lc, "install -m 600 -o ${operator_user} -g ${operator_user} /run/fleet-bootstrap/approle /home/${operator_user}/.config/bao/approle"]
+  - [bash, -lc, "if ! command -v tailscale >/dev/null 2>&1; then curl -fsSL https://tailscale.com/install.sh | sh; fi"]
+  - [systemctl, enable, --now, tailscaled]
+  - [bash, -lc, "tailscale logout >/dev/null 2>&1 || true"]
+  - [bash, -lc, "tailscale up --reset --auth-key=\"$(cat /run/fleet-bootstrap/tailscale-authkey)\" --ssh --accept-dns=true --hostname=${hostname}"]
+  - [bash, -lc, "sudo -iu ${operator_user} /usr/local/sbin/fleet-agent-converge"]
+  - [bash, -lc, "rm -rf /run/fleet-bootstrap"]

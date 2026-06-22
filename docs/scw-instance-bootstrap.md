@@ -1,18 +1,18 @@
-# Scaleway Agent Bootstrap
+# Scaleway Instance Bootstrap
 
-This is the repeatable path for cattle-style Scaleway agent VMs.
+This is the repeatable path for cattle-style Scaleway instances that become
+agent hosts.
 
 ## What we learned from `scw-agent-01`
 
 - Browser-based `tailscale up` is a bad bootstrap primitive over SSH: it looks
   idle while waiting for an approval URL and is easy to interrupt.
-- Scaleway agents should join the tailnet as `tag:scw-agent`, not as untagged
-  user devices. The tag has narrow grants: Bao, Spark LiteLLM `:8444`, and SSH
-  from owner/admin/dev-laptop/Spark.
+- Scaleway instances that run agent workloads should join the tailnet as
+  `tag:scw-agent`, not as untagged user devices. The tag has narrow grants:
+  Bao, Spark LiteLLM `:8444`, and SSH from owner/admin/dev-laptop/Spark.
 - Repair runs against an already-joined VM must drop the old user-owned
-  Tailscale identity before the tagged auth key can take effect. The bootstrap
-  script does this with `tailscale logout` before `tailscale up`, and therefore
-  assumes public SSH remains available during repair.
+  Tailscale identity before the tagged auth key can take effect. Cloud-init
+  does this with `tailscale logout` before `tailscale up`.
 - `chezmoi` can install `bao`, but agent sync needs a live Bao token before it
   clones private `fhh-toolkit`. `run_after_11-bao-relogin` now refreshes
   `~/.vault-token` from pre-provisioned AppRole material before agent sync.
@@ -29,26 +29,31 @@ This is the repeatable path for cattle-style Scaleway agent VMs.
 - Current `mise` direct release discovery can fail; `dotfiles` now falls back to
   the official `https://mise.run` installer.
 
-## One-command Operator Path
+## Operator Path
 
 Prerequisites on the operator machine:
 
 - The live Tailscale ACL has `tag:scw-agent` from `fos/platform/tailscale/policy.hujson`.
-- `bao`, `curl`, `jq`, and `ssh` are installed.
+- `bao`, `curl`, `jq`, `just`, and `tofu` are installed.
 - Bao has:
   - `kv/projects/fos/shared/tailscale-admin` with `TAILSCALE_API_KEY`
   - AppRole `fleet-kv` with policy `fleet-kv-read`
-- The new Scaleway VM accepts public SSH as `root`.
+- Bao has Scaleway credentials at `kv/projects/scaleway/cli`.
 
 Run from `fleet-provisioning`:
 
 ```sh
-bash scripts/bootstrap-scaleway-agent.sh <public-ip> scw-agent-02
+just scw-instance-init
+just scw-instance-plan scw-agent-02
+just scw-instance-apply scw-agent-02
+just scw-instance-verify scw-agent-02
 ```
 
-The script creates a one-use, one-hour auth key tagged `tag:scw-agent`, creates
-fresh `fleet-kv` AppRole material, provisions the `fhestvang` user, joins
-Tailscale with SSH enabled, runs `chezmoi`, and verifies the agent toolchain.
+The `prepare` step creates a one-use, one-hour auth key tagged
+`tag:scw-agent` and fresh `fleet-kv` AppRole material. OpenTofu creates the
+Scaleway instance, public IP, security group, and cloud-init payload.
+Cloud-init provisions the `fhestvang` user, joins Tailscale with SSH enabled,
+runs `chezmoi`, and the verify step checks the agent toolchain.
 
 ## Access Model
 
@@ -56,7 +61,7 @@ Use `root` only for first bootstrap and break-glass system repair. Root is not a
 working environment and intentionally has no `mise`, agent commands, dotfiles,
 Bao wrappers, or `fhh-toolkit`.
 
-After bootstrap, use the `fhestvang` user:
+After first boot, use the `fhestvang` user:
 
 ```sh
 ssh fhestvang@<public-ip>
@@ -108,7 +113,7 @@ ssh fhestvang@scw-agent-02.olm-hops.ts.net hostname
 
 ## Manual Fallback
 
-Only use this when debugging the script.
+Only use this when debugging cloud-init or OpenTofu.
 
 1. Create a one-use preauthorized Tailscale key tagged `tag:scw-agent`.
 2. Create fresh `fleet-kv` AppRole material:
