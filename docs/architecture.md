@@ -43,8 +43,9 @@ This repo converges them onto established tools.
    `chezmoi init --apply --force`.
    Current implementation: `just scw-instance-*`.
 3. `run_after_10` installs base tools including `bao`; `run_after_11` refreshes
-   `~/.vault-token`; `run_after_12` converges the mise tool manifest; and
-   `run_after_20` clones/syncs private `fhh-toolkit` using a temporary
+   `~/.vault-token`; `run_onchange_after_12` runs `mise install` when the
+   rendered mise manifest changes; and `run_after_20` clones/syncs private
+   `fhh-toolkit` using a temporary
    Bao-backed GitHub credential.
 4. They self-converge on the hourly `chezmoi update` cron — no control-node or
    Ansible step; discovery is Tailscale + tags.

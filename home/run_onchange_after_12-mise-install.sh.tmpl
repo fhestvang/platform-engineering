@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Converge the mise manifest only when the rendered manifest changes.
+# Chezmoi reruns run_onchange scripts when their rendered content changes; this
+# hash ties the script to ~/.config/mise/config.toml, including host-specific
+# template data such as hasFhhToolkit.
+# mise config hash: {{ includeTemplate "dot_config/mise/config.toml.tmpl" . | sha256sum }}
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+export MISE_YES=1
+
+command -v mise >/dev/null 2>&1 || {
+  echo "mise-install: mise not on PATH; run_after_10-install-tools should install it first" >&2
+  exit 1
+}
+
+[ -f "$HOME/.config/mise/config.toml" ] || {
+  echo "mise-install: ~/.config/mise/config.toml is missing" >&2
+  exit 1
+}
+
+mise install
+mise reshim || true
+echo "mise-install: done"

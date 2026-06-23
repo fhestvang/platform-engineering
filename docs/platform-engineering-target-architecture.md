@@ -87,6 +87,10 @@ state boundaries.
     the same review path as infrastructure changes.
 24. **Scale rehearsal**: Even with one VM, use the habits that scale: catalogs,
     environments, remote state, drift checks, and explicit ownership.
+25. **Disposable development environments**: Devcontainers and DevPod are
+    execution adapters for the same baseline, not a second dotfiles system.
+    `k3d` is the local rehearsal target for k3s/Kubernetes changes before they
+    touch the tinys cluster.
 
 ## Target Repo Shape
 
@@ -104,6 +108,9 @@ platform-engineering/
     hosts.yaml
     capabilities.yaml
     environments.yaml
+  environments/
+    devcontainer/
+    k3d/
   home/
     ... chezmoi source ...
   provisioning/
@@ -136,6 +143,10 @@ platform-engineering/
   infrastructure.
 - `operations/semaphore/` records how automation runs the repo. Semaphore is a
   runner, not a source of truth.
+- `environments/` holds disposable development targets that consume the same
+  baseline as real hosts. Devcontainers/DevPod give people and agents a
+  repeatable workstation; `k3d` gives k3s/Kubernetes changes a safe rehearsal
+  cluster before the tinys.
 - `docs/adr/` records decisions so future agents do not rediscover and reargue
   the same tradeoffs.
 

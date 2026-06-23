@@ -15,8 +15,8 @@ set -uo pipefail
 # Cron runs with a minimal PATH (/usr/bin:/bin) that excludes user-local tools,
 # so a freshly-bootstrapped host fails with `chezmoi: command not found`
 # (rc=127) unless the crontab happens to carry a PATH= line. Set it here so the
-# script self-heals regardless of how cron is configured, and so the downstream
-# `chezmoi update` (run_after mise converge etc.) finds mise + its shims too.
+# script self-heals regardless of how cron is configured, and so downstream
+# chezmoi scripts can find mise and its shims.
 export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/bin:$PATH"
 
 log="$HOME/.cache/chezmoi-update.log"
