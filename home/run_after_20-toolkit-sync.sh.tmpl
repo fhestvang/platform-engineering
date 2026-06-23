@@ -39,7 +39,7 @@ toolkit="$HOME/github/fhh-toolkit"
 # block --ff-only, so a dirty checkout is left as-is rather than clobbered.
 if [ ! -d "$toolkit/.git" ]; then
   mkdir -p "$HOME/github"
-  git_with_bao_github clone https://github.com/fhestvang/fhh-toolkit.git "$toolkit" || true
+  git_with_bao_github clone --depth=1 https://github.com/fhestvang/fhh-toolkit.git "$toolkit" || true
 fi
 [ -d "$toolkit" ] || { echo "toolkit-sync: fhh-toolkit not present, skipping"; exit 0; }
 git_with_bao_github -C "$toolkit" pull --ff-only || true
