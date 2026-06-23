@@ -25,6 +25,15 @@ This repo converges them onto established tools.
 - **Pull only.** Each box self-converges on an hourly `chezmoi update` cron — no
   control-node push. This scales to VPCs that boot and provision themselves
   (cloud-init runs `chezmoi init --apply`).
+- **One convergence entrypoint.** Cron and manual fleet tests should both use
+  `~/.local/bin/chezmoi-sync`, which wraps `chezmoi update --init --force`.
+  That keeps generated config and locally-drifted managed files self-healing in
+  non-interactive sessions.
+- **Config and cleanup are separate concerns.** Removing a tool from a config
+  file prevents future use, but existing plugin directories, caches, generated
+  parser state, and manager-installed binaries may remain on hosts. Retire that
+  state with small idempotent `run_after_*` hooks when the desired fleet
+  baseline needs the old state physically gone.
 - **No Ansible.** The fleet is entirely user-local (user systemd units,
   user-local tools, no root/apt), so a system/push tool had nothing to do.
   Spark's serving units (vLLM/headroom/runner) live in `dot_config/systemd/user/`,

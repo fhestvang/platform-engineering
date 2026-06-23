@@ -51,6 +51,34 @@ per-tool wrappers read Bao at call time (see below).
 There's no push/control-node step: every box self-converges on an hourly
 `chezmoi update` cron (`run_after_02-install-sync-cron`).
 
+## Rolling out a fleet change
+
+The smooth path is:
+
+```sh
+# edit this repo, then validate from the repo checkout
+chezmoi -S home apply --exclude scripts
+
+# commit + push, then test the real fleet convergence path locally
+~/.local/bin/chezmoi-sync
+```
+
+Use `~/.local/bin/chezmoi-sync` for on-demand convergence on a host, not plain
+`chezmoi update`. It is the same entrypoint cron runs, and it uses
+`chezmoi update --init --force` so generated config changes and locally-drifted
+managed files are reconciled without an interactive prompt.
+
+Two source paths matter:
+
+- development checkout: `~/github/platform-engineering/home`
+- live chezmoi source on each host: `$(chezmoi source-path)`; with this repo's
+  `.chezmoiroot`, that is usually `~/.local/share/chezmoi/home`
+
+Testing with `chezmoi -S home apply` proves the checkout renders, but it does
+not update the host's live chezmoi source clone. After pushing, run
+`chezmoi-sync` on one or two representative hosts to prove the actual hourly
+path works.
+
 ## Host resource model
 
 - `root`: bootstrap and break-glass only. Do not expect `mise`, toolkit commands,
