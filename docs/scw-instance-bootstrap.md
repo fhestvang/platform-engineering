@@ -80,7 +80,7 @@ On the VM:
 
 ```sh
 chezmoi data | grep -E 'hostname|role|hasFhhToolkit'
-for c in mise node nvim lazygit codex claude pi; do command -v "$c"; done
+for c in mise node nvim lazygit starship fzf zoxide fd rg bat eza atuin direnv yazi tmux sesh btop gh gh-dash kubectl k9s k3d dagger skaffold glow lazydocker codex claude pi; do command -v "$c"; done
 bao kv get -field=GITHUB_TOKEN kv/projects/fos/shared/github-cli >/dev/null
 test -d ~/github/fhh-toolkit/.git
 crontab -l | grep chezmoi-sync
@@ -98,6 +98,8 @@ Expected:
 - hostname starts with `scw-instance-`
 - chezmoi role is `scw-instance`
 - `hasFhhToolkit` is `true`
+- terminal/workstation tools, Kubernetes tools, Dagger, Skaffold, and `sesh`
+  resolve through mise shims
 - `codex`, `claude`, and `pi` resolve through mise shims when fhh-toolkit is attached
 - `fhh-toolkit` exists and toolkit config has synced
 - hourly `chezmoi-sync` is installed
