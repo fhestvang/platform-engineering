@@ -23,6 +23,11 @@ contain bootstrap secrets. They are ignored by git.
 The Tailscale auth key is one-use and expires after one hour. Apply the plan
 soon after running `just scw-instance-plan`; if the key expires, rerun the plan.
 
+The server resource ignores `user_data` drift after creation. Cloud-init is
+create-time input, and the generated bootstrap credentials are intentionally
+ephemeral. Use chezmoi/mise for ongoing convergence, or replace the instance
+when first-boot behavior itself must be proven again.
+
 ## Usage
 
 ```sh

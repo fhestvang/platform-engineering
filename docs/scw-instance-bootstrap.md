@@ -55,6 +55,11 @@ Scaleway instance, public IP, security group, and cloud-init payload.
 Cloud-init provisions the `fhestvang` user, joins Tailscale with SSH enabled,
 runs `chezmoi`, and the verify step checks the attached toolkit capability.
 
+After creation, OpenTofu ignores `user_data` drift on the server resource.
+That is deliberate: cloud-init is first-boot input, while the generated
+Tailscale key and Bao AppRole material are one-use bootstrap secrets. Ongoing
+changes should converge through chezmoi/mise or by replacing the cattle host.
+
 ## Access Model
 
 Use `root` only for first bootstrap and break-glass system repair. Root is not a

@@ -39,6 +39,13 @@ resource "scaleway_instance_server" "instance" {
     "cloud-init" = local.cloud_init
   }
 
+  lifecycle {
+    # Cloud-init is a first-boot contract. Bootstrap secrets are one-use and
+    # should not create perpetual drift after the server exists; ongoing
+    # convergence belongs to chezmoi/mise.
+    ignore_changes = [user_data]
+  }
+
   root_volume {
     size_in_gb = var.root_volume_size_gb
   }
