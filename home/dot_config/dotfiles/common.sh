@@ -128,69 +128,6 @@ whereami() {
   printf '%s\n' "$DOTFILES_MACHINE"
 }
 
-dotfiles_has_controlling_tty() {
-  { : < /dev/tty > /dev/tty; } 2>/dev/null
-}
-
-dotfiles_tmux_detached_new_session() {
-  local arg
-
-  for arg in "$@"; do
-    [ "$arg" = "-d" ] && return 0
-  done
-  return 1
-}
-
-dotfiles_tmux_subcommand() {
-  local arg skip_next=false
-
-  for arg in "$@"; do
-    if [ "$skip_next" = true ]; then
-      skip_next=false
-      continue
-    fi
-
-    case "$arg" in
-      -L|-S|-f|-c)
-        skip_next=true
-        ;;
-      -*)
-        ;;
-      *)
-        printf '%s\n' "$arg"
-        return
-        ;;
-    esac
-  done
-
-  printf 'new-session\n'
-}
-
-dotfiles_tmux_needs_client_tty() {
-  local subcommand
-
-  subcommand="$(dotfiles_tmux_subcommand "$@")"
-  case "$subcommand" in
-    attach|attach-session|a)
-      return 0
-      ;;
-    new|new-session)
-      dotfiles_tmux_detached_new_session "$@" && return 1
-      return 0
-      ;;
-  esac
-
-  return 1
-}
-
-tmux() {
-  if dotfiles_tmux_needs_client_tty "$@" && { [ ! -t 0 ] || [ ! -t 1 ]; } && dotfiles_has_controlling_tty; then
-    command tmux "$@" < /dev/tty > /dev/tty 2>&1
-  else
-    command tmux "$@"
-  fi
-}
-
 dotfiles_tmux_client_session() {
   # One plain session per base name, shared by every terminal. No per-tty
   # grouped sessions: grouping let sibling sessions diverge on current-window,
@@ -306,7 +243,7 @@ ts() {
   # no exec on tmux: after detach, fall through to a spark login shell rather
   # than ending the SSH command and bouncing back to the laptop.
   remote_command='printf "\033]1337;SetUserVar=FHH_HOST=c3Bhcms=\a"; if command -v tailscale >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1; then addr="$(tailscale ip -4 2>/dev/null | sed -n 1p)"; if [ -n "$addr" ]; then addr_b64="$(printf "%s" "$addr" | base64 | tr -d "\r\n")"; printf "\033]1337;SetUserVar=FHH_HOST_ADDR=%s\a" "$addr_b64"; fi; fi; printf "\033]1337;SetUserVar=FHH_IMAGE_PASTE_HOST=c3Bhcms=\a"; export PATH="$HOME/.local/bin:$HOME/bin:$PATH"; export TERM=xterm-256color; shell="$(command -v zsh 2>/dev/null || command -v bash 2>/dev/null || printf /bin/sh)"; export SHELL="$shell"; tmux -2 new-session -A -s main; exec "$shell" -l'
-  if dotfiles_has_controlling_tty; then
+  if { : < /dev/tty > /dev/tty; } 2>/dev/null; then
     tty_stdio=true
   fi
 
