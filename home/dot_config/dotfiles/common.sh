@@ -128,6 +128,69 @@ whereami() {
   printf '%s\n' "$DOTFILES_MACHINE"
 }
 
+dotfiles_has_controlling_tty() {
+  { : < /dev/tty > /dev/tty; } 2>/dev/null
+}
+
+dotfiles_tmux_detached_new_session() {
+  local arg
+
+  for arg in "$@"; do
+    [ "$arg" = "-d" ] && return 0
+  done
+  return 1
+}
+
+dotfiles_tmux_subcommand() {
+  local arg skip_next=false
+
+  for arg in "$@"; do
+    if [ "$skip_next" = true ]; then
+      skip_next=false
+      continue
+    fi
+
+    case "$arg" in
+      -L|-S|-f|-c)
+        skip_next=true
+        ;;
+      -*)
+        ;;
+      *)
+        printf '%s\n' "$arg"
+        return
+        ;;
+    esac
+  done
+
+  printf 'new-session\n'
+}
+
+dotfiles_tmux_needs_client_tty() {
+  local subcommand
+
+  subcommand="$(dotfiles_tmux_subcommand "$@")"
+  case "$subcommand" in
+    attach|attach-session|a)
+      return 0
+      ;;
+    new|new-session)
+      dotfiles_tmux_detached_new_session "$@" && return 1
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+tmux() {
+  if dotfiles_tmux_needs_client_tty "$@" && { [ ! -t 0 ] || [ ! -t 1 ]; } && dotfiles_has_controlling_tty; then
+    command tmux "$@" < /dev/tty > /dev/tty 2>&1
+  else
+    command tmux "$@"
+  fi
+}
+
 dotfiles_tmux_client_session() {
   # One plain session per base name, shared by every terminal. No per-tty
   # grouped sessions: grouping let sibling sessions diverge on current-window,
@@ -183,8 +246,36 @@ __dotfiles_wezterm_set_user_var() {
   fi
 }
 
+__dotfiles_machine_ip() {
+  if [ -n "${DOTFILES_MACHINE_IP:-}" ]; then
+    printf '%s' "$DOTFILES_MACHINE_IP"
+    return 0
+  fi
+
+  local ip windows_tailscale
+
+  if dotfiles_have_linux tailscale; then
+    ip="$(tailscale ip -4 2>/dev/null | awk 'NR == 1 { print; exit }')" || ip=""
+  fi
+
+  if [ -z "$ip" ]; then
+    windows_tailscale="/mnt/c/Program Files/Tailscale/tailscale.exe"
+    if [ -x "$windows_tailscale" ]; then
+      ip="$("$windows_tailscale" ip -4 2>/dev/null | tr -d '\r' | awk 'NR == 1 { print; exit }')" || ip=""
+    fi
+  fi
+
+  if [ -z "$ip" ]; then
+    ip="$(hostname -I 2>/dev/null | awk '{ for (i = 1; i <= NF; i++) if ($i !~ /^(127\.|169\.254\.|fe80:|::1$)/) { print $i; exit } }')" || ip=""
+  fi
+
+  DOTFILES_MACHINE_IP="$ip"
+  export DOTFILES_MACHINE_IP
+  printf '%s' "$DOTFILES_MACHINE_IP"
+}
+
 __dotfiles_update_wezterm_context() {
-  local image_paste_host
+  local image_paste_host machine_ip
 
   # Stamp the image-paste host as the machine this prompt runs on, so a pasted
   # screenshot lands where the agent reading it actually runs: laptop shells keep
@@ -194,8 +285,10 @@ __dotfiles_update_wezterm_context() {
   # re-stamps the pane and never leaves a stale host. Override per-shell with
   # CODEX_IMAGE_PASTE_HOST to force a different target.
   image_paste_host="${CODEX_IMAGE_PASTE_HOST:-$DOTFILES_MACHINE}"
+  machine_ip="$(__dotfiles_machine_ip)"
 
   __dotfiles_wezterm_set_user_var FHH_HOST "$DOTFILES_MACHINE"
+  __dotfiles_wezterm_set_user_var FHH_HOST_ADDR "$machine_ip"
   __dotfiles_wezterm_set_user_var FHH_IMAGE_PASTE_HOST "$image_paste_host"
 }
 
@@ -208,11 +301,14 @@ spark() {
 }
 
 ts() {
-  local remote_command ssh_command
+  local remote_command ssh_command tty_stdio=false
 
   # no exec on tmux: after detach, fall through to a spark login shell rather
   # than ending the SSH command and bouncing back to the laptop.
-  remote_command='printf "\033]1337;SetUserVar=FHH_HOST=c3Bhcms=\a"; printf "\033]1337;SetUserVar=FHH_IMAGE_PASTE_HOST=c3Bhcms=\a"; export PATH="$HOME/.local/bin:$HOME/bin:$PATH"; export TERM=xterm-256color; shell="$(command -v zsh 2>/dev/null || command -v bash 2>/dev/null || printf /bin/sh)"; export SHELL="$shell"; tmux -2 new-session -A -s main; exec "$shell" -l'
+  remote_command='printf "\033]1337;SetUserVar=FHH_HOST=c3Bhcms=\a"; if command -v tailscale >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1; then addr="$(tailscale ip -4 2>/dev/null | sed -n 1p)"; if [ -n "$addr" ]; then addr_b64="$(printf "%s" "$addr" | base64 | tr -d "\r\n")"; printf "\033]1337;SetUserVar=FHH_HOST_ADDR=%s\a" "$addr_b64"; fi; fi; printf "\033]1337;SetUserVar=FHH_IMAGE_PASTE_HOST=c3Bhcms=\a"; export PATH="$HOME/.local/bin:$HOME/bin:$PATH"; export TERM=xterm-256color; shell="$(command -v zsh 2>/dev/null || command -v bash 2>/dev/null || printf /bin/sh)"; export SHELL="$shell"; tmux -2 new-session -A -s main; exec "$shell" -l'
+  if dotfiles_has_controlling_tty; then
+    tty_stdio=true
+  fi
 
   if dotfiles_is_spark; then
     t
@@ -220,12 +316,19 @@ ts() {
     __dotfiles_wezterm_set_user_var FHH_HOST spark
     __dotfiles_wezterm_set_user_var FHH_IMAGE_PASTE_HOST spark
     ssh_command="ssh -tt -o ClearAllForwardings=yes spark $(printf '%q' "$remote_command")"
+    if [ "$tty_stdio" = true ]; then
+      ssh_command="$ssh_command </dev/tty >/dev/tty 2>&1"
+    fi
     tmux detach-client -E "$ssh_command"
   else
     __dotfiles_wezterm_set_user_var FHH_HOST spark
     __dotfiles_wezterm_set_user_var FHH_IMAGE_PASTE_HOST spark
     # shellcheck disable=SC2033  # 'spark' is the ssh Host alias, not the spark() function
-    ssh -tt -o ClearAllForwardings=yes spark "$remote_command"
+    if [ "$tty_stdio" = true ]; then
+      ssh -tt -o ClearAllForwardings=yes spark "$remote_command" < /dev/tty > /dev/tty 2>&1
+    else
+      ssh -tt -o ClearAllForwardings=yes spark "$remote_command"
+    fi
   fi
 }
 
