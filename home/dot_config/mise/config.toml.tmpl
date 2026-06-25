@@ -55,9 +55,14 @@ dagger = "latest"
 skaffold = "latest"
 "aqua:loft-sh/devpod" = "latest"
 {{ if .hasFhhToolkit }}
-# --- coding CLIs (float, fhh-toolkit hosts only) ---
+# --- coding CLIs (PINNED, fhh-toolkit hosts only) ---
+# Pinned (not float) so a version bump is a manifest *change* that fires the
+# run_onchange mise-install hook and converges every host on the next hourly
+# chezmoi pull. To roll the fleet forward: bump the version here, commit, push.
+# Explicit pins bypass mise's minimum_release_age gate, so newer hosts still
+# install the pinned build even if it's younger than their float-latest floor.
 # Claude Code ships a native binary; avoid the npm wrapper's postinstall path.
-claude = "latest"
-"npm:@openai/codex" = "latest"
-"npm:@earendil-works/pi-coding-agent" = "latest"
+claude = "2.1.191"
+"npm:@openai/codex" = "0.142.2"
+"npm:@earendil-works/pi-coding-agent" = "0.80.2"
 {{ end -}}
