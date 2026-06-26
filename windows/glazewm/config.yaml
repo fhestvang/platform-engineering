@@ -1,8 +1,11 @@
 general:
   # Start YASB together with GlazeWM, and stop it on exit.
-  startup_commands: ['shell-exec yasbc start']
+  startup_commands:
+    - 'shell-exec yasbc start'
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %USERPROFILE%/.glzr/glazewm/apply-window-opacity.ps1'
   shutdown_commands: ['shell-exec yasbc stop']
-  config_reload_commands: []
+  config_reload_commands:
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %USERPROFILE%/.glzr/glazewm/apply-window-opacity.ps1'
 
   # Focus the window directly under the cursor.
   focus_follows_cursor: false
@@ -38,8 +41,8 @@ window_effects:
       enabled: true
       style: 'rounded'
     transparency:
-      enabled: true
-      opacity: '94%'
+      enabled: false
+      opacity: '100%'
   other_windows:
     border:
       enabled: true
@@ -48,8 +51,8 @@ window_effects:
       enabled: true
       style: 'rounded'
     transparency:
-      enabled: true
-      opacity: '86%'
+      enabled: false
+      opacity: '100%'
 
 window_behavior:
   initial_state: 'tiling'
@@ -80,6 +83,8 @@ window_rules:
       - window_process: { equals: 'zebar' }
       # Task Manager requires elevation to manage and should be ignored.
       - window_process: { equals: 'Taskmgr' }
+      # Launcher pop-up loses keyboard focus if tiled — leave it alone.
+      - window_process: { equals: 'PowerToys.PowerLauncher' }
       # Picture-in-picture windows.
       - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
         window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }

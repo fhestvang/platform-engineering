@@ -25,9 +25,10 @@ win_home="$(wslpath "$win_userprofile")"
 # repo-relative path : path relative to %USERPROFILE% on Windows
 map=(
   "glazewm/config.yaml:.glzr/glazewm/config.yaml"
+  "glazewm/apply-window-opacity.ps1:.glzr/glazewm/apply-window-opacity.ps1"
   "yasb/config.yaml:.config/yasb/config.yaml"
   "yasb/styles.css:.config/yasb/styles.css"
-  "flowlauncher/FHH Mono.xaml:AppData/Roaming/FlowLauncher/Themes/FHH Mono.xaml"
+  "ahk/win-launcher.ahk:.config/ahk/win-launcher.ahk"
   "youtube-music/fhh-mono.css:AppData/Roaming/YouTube Music/themes/fhh-mono.css"
 )
 
