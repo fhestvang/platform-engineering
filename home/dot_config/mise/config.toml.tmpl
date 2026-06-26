@@ -17,6 +17,12 @@ neovim = "0.12.3"
 lazygit = "0.62.0"
 go = "1.25.9"
 
+# --- pinned utilities (all hosts) ---
+# Pinned (not float) so the fleet stays on one version. Bumping this is a
+# manifest *change* that fires the run_onchange mise-install hook and converges
+# every host on the next hourly chezmoi pull. To roll forward: bump, commit, push.
+just = "1.53.0"
+
 # --- terminal/workstation CLIs (float, all hosts) ---
 starship = "latest"
 fzf = "latest"
@@ -34,7 +40,6 @@ gh = "latest"
 "aqua:dlvhdr/gh-dash" = "latest"
 
 # --- utility CLIs (float, all hosts) ---
-just = "latest"
 stern = "latest"
 kubectx = "latest"
 kubens = "latest"
