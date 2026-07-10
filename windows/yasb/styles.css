@@ -8,9 +8,9 @@
 }
 
 .yasb-bar {
-  /* Keep the fill translucent so the DWM acrylic blur reads as frost. A box-shadow
-     here would force Qt to raster-render the window and kill the acrylic backdrop. */
-  background-color: rgba(17, 17, 27, 0.4);
+  /* Blur is off; use an opaque fill pre-lifted to the color the translucent Glaze
+     windows perceive as (85-96% opacity over wallpaper), so the bar matches them. */
+  background-color: rgba(38, 40, 58, 1);
   border-radius: 10px;
 }
 

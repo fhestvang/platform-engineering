@@ -11,7 +11,7 @@ bars:
       position: "top"
       align: "center"
     blur_effect:
-      enabled: true
+      enabled: false
       dark_mode: true
       round_corners: true
       round_corners_type: "normal"
@@ -36,7 +36,7 @@ bars:
     widgets:
       left: ["glazewm_workspaces", "glazewm_tiling_direction"]
       center: ["clock"]
-      right: ["cpu", "memory", "media", "volume", "wifi", "battery", "systray"]
+      right: ["media", "open_player", "volume", "wifi", "battery", "systray"]
 
 widgets:
   glazewm_workspaces:
@@ -76,14 +76,26 @@ widgets:
   media:
     type: "yasb.media.MediaWidget"
     options:
-      # Minimal transport: prev / play-pause / next. Drives whatever app owns the
-      # Windows media session (YouTube Music desktop, Spotify, a browser tab...).
-      # Hidden entirely when nothing is playing. Flip controls_only to false if you
-      # want the scrolling track title back.
+      # Minimal transport only: prev / play-pause / next. The open-player button
+      # lives in a separate custom widget next to this one.
       hide_empty: true
       controls_only: true
       controls_left: true
       show_thumbnail: false
+
+  # Launcher button for the YouTube Music desktop app (th-ch). It's single
+  # instance, so re-running the exe just focuses the existing window. Sits right
+  # of the media controls. (open_media_source can't activate this Electron AUMID.)
+  open_player:
+    type: "yasb.custom.CustomWidget"
+    options:
+      label: "󰎇"
+      label_alt: "󰎇"
+      class_name: "open-player-widget"
+      callbacks:
+        on_left: 'exec cmd /c start C:\Users\Bruger\AppData\Local\Programs\YOUTUB~1\YOUTUB~1.EXE'
+        on_middle: "do_nothing"
+        on_right: "do_nothing"
 
   volume:
     type: "yasb.volume.VolumeWidget"
@@ -108,7 +120,7 @@ widgets:
     type: "yasb.systray.SystrayWidget"
     options:
       icon_size: 16
-      show_unpinned: true
+      show_unpinned: false
       show_unpinned_button: true
       show_battery: false
       show_volume: false
