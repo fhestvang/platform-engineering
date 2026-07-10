@@ -46,6 +46,14 @@ public static class FhhWindowOpacity {
     uint dwFlags
   );
 
+  [DllImport("user32.dll", SetLastError = true)]
+  public static extern bool GetLayeredWindowAttributes(
+    IntPtr hwnd,
+    out uint crKey,
+    out byte bAlpha,
+    out uint dwFlags
+  );
+
   public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex) {
     return IntPtr.Size == 8
       ? GetWindowLongPtr64(hWnd, nIndex)
@@ -62,14 +70,12 @@ public static class FhhWindowOpacity {
 
 $gwlExStyle = -20
 $wsExLayered = 0x00080000
+$lwaColorKey = 0x1
 $lwaAlpha = 0x2
 $focusedAlpha = [byte]245 # 96%
 $otherAlpha = [byte]217   # 85%
 $opaqueAlpha = [byte]255  # 100%
 $processNameCache = @{}
-# Last alpha actually applied per window, so we only call SetLayeredWindowAttributes
-# when the target changes. Re-stamping every tick caused visible flicker during redraws.
-$appliedAlpha = @{}
 $excludedProcesses = @(
   'ApplicationFrameHost',
   'explorer',
@@ -148,11 +154,28 @@ try {
           $targetAlpha = $otherAlpha
         }
 
-        # Only touch the window when its opacity actually needs to change.
-        if ($appliedAlpha[$hWnd] -ne $targetAlpha) {
-          Set-Alpha $hWnd $targetAlpha
-          $appliedAlpha[$hWnd] = $targetAlpha
+        # Read the actual alpha back from the window instead of caching it: hWnd
+        # values are reused for new windows, and DWM resets layered attributes on
+        # display changes/resume — a cache goes stale on both and windows end up
+        # stuck at the wrong opacity. Only touch the window when it differs.
+        $style = [FhhWindowOpacity]::GetWindowLongPtr($hWnd, $gwlExStyle).ToInt64()
+        if (($style -band $wsExLayered) -ne 0) {
+          [uint32]$curKey = 0; [byte]$curAlpha = 0; [uint32]$curFlags = 0
+          $readable = [FhhWindowOpacity]::GetLayeredWindowAttributes(
+            $hWnd, [ref]$curKey, [ref]$curAlpha, [ref]$curFlags)
+
+          # Unreadable = per-pixel alpha (UpdateLayeredWindow); color-keyed windows
+          # would lose their key if we stamped LWA_ALPHA over it. Leave both alone.
+          if (-not $readable -or ($curFlags -band $lwaColorKey) -ne 0) {
+            continue
+          }
+
+          if (($curFlags -band $lwaAlpha) -ne 0 -and $curAlpha -eq $targetAlpha) {
+            continue
+          }
         }
+
+        Set-Alpha $hWnd $targetAlpha
       } catch {
         continue
       }
@@ -160,7 +183,6 @@ try {
 
     if ($processNameCache.Count -gt 512) {
       $processNameCache.Clear()
-      $appliedAlpha.Clear()
     }
 
     Start-Sleep -Milliseconds 100

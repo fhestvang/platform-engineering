@@ -5,11 +5,12 @@
 # symlink across /mnt/c unsafe (it would point at an unreachable path).
 #
 # Run in WSL on the Windows laptop:
-#   ./sync-to-windows.sh          push repo -> Windows (default), then reload YASB
+#   ./sync-to-windows.sh          push repo -> Windows (default), then reload both
 #   ./sync-to-windows.sh --pull   capture live edits Windows -> repo
 #
-# GlazeWM runs elevated, so this script can't reload it: press Alt+Shift+R after
-# a push to apply its config. YASB is reloaded automatically.
+# GlazeWM is uiAccess (not admin-elevated): it can't be launched or killed from
+# here, but its websocket IPC (ws://localhost:6123) accepts wm-reload-config from
+# any process — so both GlazeWM and YASB reload automatically after a push.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -26,6 +27,7 @@ win_home="$(wslpath "$win_userprofile")"
 map=(
   "glazewm/config.yaml:.glzr/glazewm/config.yaml"
   "glazewm/apply-window-opacity.ps1:.glzr/glazewm/apply-window-opacity.ps1"
+  "glazewm/fhh-shell-watchdog.ps1:.glzr/glazewm/fhh-shell-watchdog.ps1"
   "yasb/config.yaml:.config/yasb/config.yaml"
   "yasb/styles.css:.config/yasb/styles.css"
   "ahk/win-launcher.ahk:.config/ahk/win-launcher.ahk"
@@ -57,5 +59,13 @@ done
 if [ "$mode" = "push" ]; then
   yasbc="/mnt/c/Program Files/YASB/yasbc.exe"
   if [ -x "$yasbc" ]; then "$yasbc" reload >/dev/null 2>&1 && echo "YASB reloaded"; fi
-  echo "GlazeWM is elevated: press Alt+Shift+R to apply its config."
+  # Reload GlazeWM via its CLI companion binary, which talks to the IPC websocket
+  # (the main exe is uiAccess and can't be process-controlled from here, but IPC
+  # is open to anyone; cli/glazewm.exe works fine from WSL).
+  glazecli="/mnt/c/Program Files/glzr.io/GlazeWM/cli/glazewm.exe"
+  if [ -x "$glazecli" ] && "$glazecli" command wm-reload-config 2>/dev/null | grep -q '"success":true'; then
+    echo "GlazeWM config reloaded"
+  else
+    echo "GlazeWM reload failed (not running?): press Alt+Shift+R manually" >&2
+  fi
 fi

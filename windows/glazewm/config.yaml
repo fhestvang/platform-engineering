@@ -1,11 +1,14 @@
 general:
-  # Start YASB together with GlazeWM, and stop it on exit.
+  # Start YASB together with GlazeWM, and stop it on exit. The watchdog keeps all
+  # three alive afterwards (mutex-guarded, so re-running it is a no-op).
   startup_commands:
     - 'shell-exec yasbc start'
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %USERPROFILE%/.glzr/glazewm/apply-window-opacity.ps1'
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %USERPROFILE%/.glzr/glazewm/fhh-shell-watchdog.ps1'
   shutdown_commands: ['shell-exec yasbc stop']
   config_reload_commands:
     - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %USERPROFILE%/.glzr/glazewm/apply-window-opacity.ps1'
+    - 'shell-exec --hide-window powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %USERPROFILE%/.glzr/glazewm/fhh-shell-watchdog.ps1'
 
   # Focus the window directly under the cursor.
   focus_follows_cursor: false

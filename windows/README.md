@@ -6,6 +6,7 @@ Tracked copies of the laptop's Windows-side WM configs:
 | --------------------------- | ---------------------------------------------------------- |
 | `glazewm/config.yaml`       | `%USERPROFILE%\.glzr\glazewm\config.yaml`                  |
 | `glazewm/apply-window-opacity.ps1` | `%USERPROFILE%\.glzr\glazewm\apply-window-opacity.ps1` |
+| `glazewm/fhh-shell-watchdog.ps1` | `%USERPROFILE%\.glzr\glazewm\fhh-shell-watchdog.ps1`  |
 | `yasb/config.yaml`          | `%USERPROFILE%\.config\yasb\config.yaml`                   |
 | `yasb/styles.css`           | `%USERPROFILE%\.config\yasb\styles.css`                    |
 | `ahk/win-launcher.ahk`      | `%USERPROFILE%\.config\ahk\win-launcher.ahk`               |
@@ -30,8 +31,30 @@ off), so they're synced as copies with `sync-to-windows.sh`.
 ./sync-to-windows.sh --pull   # capture live edits Windows -> repo, then commit
 ```
 
-After a push, press **Alt+Shift+R** to reload GlazeWM (it runs elevated, so the
-script can't reload it for you). YASB is reloaded automatically.
+After a push, both YASB and GlazeWM are reloaded automatically. GlazeWM is
+uiAccess (not admin-elevated): process control from WSL fails with
+ERROR_ELEVATION_REQUIRED, but its websocket IPC on `ws://localhost:6123` accepts
+`command wm-reload-config` / `command wm-redraw` / `query ...` from any process,
+which is what the script uses. Alt+Shift+R remains as the manual fallback.
+
+## Shell watchdog
+
+`glazewm/fhh-shell-watchdog.ps1` runs permanently (started by GlazeWM's
+startup/reload commands and a Startup-folder shortcut; a mutex dedups). Every
+20s it:
+
+- issues `wm-redraw` when GlazeWM's PID changes — GlazeWM 3.10.1 crashes
+  (access violation, fixed offset) and WER auto-restarts it, but on mixed-DPI
+  monitors (125% laptop / 100% external) the re-tiled windows land at ~1/1.25
+  of their intended size until a redraw;
+- restarts GlazeWM after a crash *without* auto-restart (Event 1000 within 3
+  min; deliberate `wm-exit` is left alone; max 3 restarts per 30 min);
+- starts YASB when it's dead, and force-restarts it when hung (process alive
+  but zero visible windows for 60s — the "Timeout waiting for previous
+  instance" failure after screen changes);
+- restarts the opacity script if it exited.
+
+Actions are logged to `%USERPROFILE%\.glzr\glazewm\watchdog.log`.
 
 ## App launcher (PowerToys Run, opened by the Windows key)
 
