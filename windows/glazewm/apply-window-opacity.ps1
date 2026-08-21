@@ -102,13 +102,29 @@ function Set-Alpha($hWnd, [byte]$alpha) {
   [void][FhhWindowOpacity]::SetLayeredWindowAttributes($hWnd, 0, $alpha, $lwaAlpha)
 }
 
+$lastForeground = [System.IntPtr]::Zero
+$ticksSinceSweep = 10
+
 try {
   while ($true) {
+    # The full EnumWindows sweep through PowerShell callbacks costs ~9% of a core
+    # at 10Hz, so each 100ms tick only makes one native call. Sweep on focus
+    # change (the visible transition must stay instant) or every 10th tick — the
+    # 1s fallback still catches new unfocused windows and DWM resetting layered
+    # attributes on display changes/resume.
+    $foreground = [FhhWindowOpacity]::GetForegroundWindow()
+    $ticksSinceSweep++
+    if ($foreground -eq $lastForeground -and $ticksSinceSweep -lt 10) {
+      Start-Sleep -Milliseconds 100
+      continue
+    }
+    $lastForeground = $foreground
+    $ticksSinceSweep = 0
+
     if ($null -eq (Get-Process -Name glazewm -ErrorAction SilentlyContinue)) {
       break
     }
 
-    $foreground = [FhhWindowOpacity]::GetForegroundWindow()
     $windows = [System.Collections.Generic.List[System.IntPtr]]::new()
     $callback = [FhhWindowOpacity+EnumWindowsProc]{
       param([System.IntPtr]$hWnd, [System.IntPtr]$lParam)
