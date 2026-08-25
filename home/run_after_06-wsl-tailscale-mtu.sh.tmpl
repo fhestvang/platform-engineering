@@ -1,0 +1,75 @@
+{{ if eq .role "laptop" -}}
+#!/usr/bin/env bash
+# WSL2 + Tailscale MTU black-hole guard. {{ .hostname }}
+#
+# Problem: WSL2 NAT-mode eth0 MTU can shrink (as low as the IPv6 floor, 1280)
+# after a Windows/WSL network change. tailscale0 defaults to 1280, and WireGuard
+# adds ~80B; a 1280 tunnel therefore needs eth0 >= 1360. When eth0 drops below
+# that, large packets (SSH KEX, TLS certs) silently black-hole while pings pass
+# -- the misleading "network looks fine but ssh spark hangs" failure.
+#
+# Fix: pin the tunnel to 1200. 1200 + 80 = 1280 outer, which fits even at eth0's
+# 1280 floor AND the internet's guaranteed 1280 minimum path -- so the black hole
+# becomes impossible by construction, with no event-watcher to race. TS_DEBUG_MTU
+# is honored below 1280 (no minimum clamp) and re-applied at every tailscaled
+# start, so it survives reboot, `wsl --shutdown`, and network changes.
+# Only ~15% bulk-throughput cost; invisible for SSH/admin. See reference memory
+# reference_tailscale_mtu_blackhole.
+set -euo pipefail
+
+WANT_MTU=1200
+ENV_FILE=/etc/default/tailscaled
+
+# WSL-only guard (role could gain a non-WSL laptop later).
+grep -qi microsoft /proc/version 2>/dev/null || exit 0
+command -v tailscale >/dev/null 2>&1 || exit 0
+[ -f "$ENV_FILE" ] || exit 0
+
+file_ok() { grep -q "^TS_DEBUG_MTU=${WANT_MTU}\$" "$ENV_FILE"; }
+iface_mtu() { cat /sys/class/net/tailscale0/mtu 2>/dev/null || echo 0; }
+
+# Already correct in both the config and the live interface? Nothing to do.
+if file_ok && [ "$(iface_mtu)" = "$WANT_MTU" ]; then
+  exit 0
+fi
+
+# A change is needed but requires root. Pick a sudo mode by context so we never
+# hang the headless sync cron waiting on a password prompt:
+#   - already-cached / passwordless sudo -> use it silently
+#   - interactive terminal                -> allow a normal (prompting) sudo
+#   - non-interactive, no cached creds     -> notice + exit 0; self-heal on the
+#     next interactive `chezmoi apply`.
+if sudo -n true 2>/dev/null; then
+  SUDO="sudo -n"
+elif [ -t 0 ] || [ -t 1 ]; then
+  SUDO="sudo"
+else
+  echo "[wsl-tailscale-mtu] TS_DEBUG_MTU=${WANT_MTU} not applied yet (needs sudo)." >&2
+  echo "[wsl-tailscale-mtu] Run 'chezmoi apply' from a terminal to apply it." >&2
+  exit 0
+fi
+
+$SUDO bash -c '
+  set -e
+  f="'"$ENV_FILE"'"; want="'"$WANT_MTU"'"
+  # Idempotently ensure exactly one correct TS_DEBUG_MTU line.
+  sed -i "/^TS_DEBUG_MTU=/d" "$f"
+  printf "TS_DEBUG_MTU=%s\n" "$want" >> "$f"
+  systemctl restart tailscaled
+'
+
+# Verify the live interface picked it up.
+for _ in 1 2 3 4 5; do
+  [ "$(iface_mtu)" = "$WANT_MTU" ] && break
+  sleep 1
+done
+if [ "$(iface_mtu)" = "$WANT_MTU" ]; then
+  echo "[wsl-tailscale-mtu] tailscale0 pinned to MTU ${WANT_MTU}."
+else
+  echo "[wsl-tailscale-mtu] WARNING: restart done but tailscale0 mtu is $(iface_mtu), expected ${WANT_MTU}." >&2
+fi
+{{- else -}}
+#!/usr/bin/env bash
+# {{ .hostname }}: not the WSL laptop; no Tailscale MTU pin needed.
+exit 0
+{{- end }}
