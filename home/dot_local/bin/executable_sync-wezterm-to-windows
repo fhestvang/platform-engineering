@@ -27,9 +27,8 @@ win_home="$(wslpath "$win_userprofile")"
 dest="$win_home/.config/wezterm/wezterm.lua"
 
 mkdir -p "$(dirname "$dest")"
-if [ -f "$dest" ] && ! cmp -s "$repo_cfg" "$dest"; then
-  cp "$dest" "$dest.bak-$(date +%Y%m%d-%H%M%S)"
-fi
+# No backup of the Windows copy: it is a generated mirror of the repo file, and
+# git holds the history. Backups here only piled up as wezterm.lua.bak-* clutter.
 cp "$repo_cfg" "$dest"
 
 echo "synced: $repo_cfg"
